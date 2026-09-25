@@ -31,9 +31,22 @@
 }
 
 .contentList {
+    position: relative;
     flex: 1 1 auto;
     min-width: 0;
     overflow: auto;
+}
+
+/* Sits over the tree rather than replacing it, so opening a branch does not take away the rows
+   that are still perfectly valid */
+.treeLoading {
+    position: sticky;
+    z-index: 1;
+    top: var(--spacing-nano);
+    display: flex;
+    justify-content: flex-end;
+    height: 0;
+    padding-right: var(--spacing-small);
 }
 
 .contentPlaceholder {

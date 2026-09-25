@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef} from 'react';
 import PropTypes from 'prop-types';
 import {useDispatch, useSelector} from 'react-redux';
 import {useTranslation} from 'react-i18next';
@@ -44,6 +44,8 @@ const Tree = ({pane, site, mode}) => {
 
     const rootPath = `/sites/${site}`;
     const {transfer} = useTransfer();
+    // Survives a re-query, which is what lets the tree stay on screen while a branch opens
+    const lastRows = useRef([]);
 
     // A drag is always a move: the gesture says "put it there", not "leave a copy behind"
     const onDropInto = async (item, destination) => {
@@ -91,19 +93,26 @@ const Tree = ({pane, site, mode}) => {
         })
     });
 
-    if (loading && !result) {
-        return <div className={styles.contentPlaceholder}><Loader size="big"/></div>;
-    }
-
     if (error) {
         console.error('Could not read the contents of ' + rootPath, error);
         return <Placeholder>{t('multisite-manager:label.error')}</Placeholder>;
     }
 
-    const rows = flattenTree(result?.nodes);
+    // Opening a branch re-runs the whole query, and network-only means the result comes back empty
+    // before it comes back full. Rendering that would blank the tree and - worse - claim the site
+    // holds nothing. So the last rows that existed stay on screen until real ones replace them.
+    const fresh = flattenTree(result?.nodes);
+    if (!loading && fresh.length > 0) {
+        lastRows.current = fresh;
+    }
+
+    const rows = fresh.length > 0 ? fresh : lastRows.current;
 
     if (rows.length === 0) {
-        return <Placeholder>{t('multisite-manager:label.empty')}</Placeholder>;
+        // Nothing to keep and nothing arrived: either the first load, or a site that really is bare
+        return loading ?
+            <div className={styles.contentPlaceholder}><Loader size="big"/></div> :
+            <Placeholder>{t('multisite-manager:label.empty')}</Placeholder>;
     }
 
     const selectedPaths = new Set(selection.map(node => node.path));
@@ -127,6 +136,11 @@ const Tree = ({pane, site, mode}) => {
              className={clsx(styles.contentList, isOverPane && canDropOnPane && styles.dropInto)}
              data-sel-role={`multisite-content-${pane}`}
         >
+            {loading && (
+                <div className={styles.treeLoading} data-sel-role="multisite-loading">
+                    <Loader size="small"/>
+                </div>
+            )}
             <Table>
                 <TableHead>
                     <TableRow>
