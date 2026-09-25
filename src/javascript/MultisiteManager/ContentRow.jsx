@@ -8,7 +8,7 @@ import {canDropInto, DRAG_TYPE, isFolder, toDraggable} from './dragAndDrop';
 import styles from './MultisiteManager.scss';
 
 // Each level is indented by this much, so depth reads at a glance without a guide line
-const INDENT_PX = 16;
+const INDENT_PX = 24;
 
 /**
  * One row of the tree, which is something to pick up, somewhere to put things if it can hold them,
@@ -52,9 +52,14 @@ export const ContentRow = ({
             <TableBodyCell className={styles.checkboxCell}>
                 <Checkbox checked={isSelected} onChange={() => onToggle(node)}/>
             </TableBodyCell>
-            <TableBodyCell iconStart={<NodeIcon node={node}/>}>
+            <TableBodyCell>
+                {/*
+                  * The icon is inside the indented wrapper rather than passed as iconStart, which
+                  * TableBodyCell renders outside it: that left every icon in one column and shifted
+                  * only the text, so a nested tree read as a flat list.
+                  */}
                 <span className={styles.rowName} style={{paddingLeft: depth * INDENT_PX}}>
-                    {/* The caret occupies its slot even on a leaf, so names line up within a level */}
+                    {/* The caret keeps its slot even on a leaf, so names line up within a level */}
                     <span className={styles.caret}>
                         {hasChildren && (
                             <Button size="small"
@@ -69,6 +74,7 @@ export const ContentRow = ({
                             />
                         )}
                     </span>
+                    <NodeIcon node={node}/>
                     {node.displayName || node.name}
                 </span>
             </TableBodyCell>

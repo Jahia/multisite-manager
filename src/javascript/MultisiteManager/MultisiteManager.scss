@@ -98,6 +98,7 @@
     display: inline-flex;
     gap: var(--spacing-nano);
     align-items: center;
+    min-width: 0;
 }
 
 /* Reserved whether or not there is a caret, so names line up within a level */
