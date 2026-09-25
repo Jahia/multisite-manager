@@ -179,3 +179,14 @@
     font-style: italic;
     white-space: nowrap;
 }
+
+/*
+ * Hovered while holding something this folder will not take. Distinct from a plain non-target,
+ * which shows nothing at all: silence reads as "keep looking", and this has to read as "not here".
+ */
+.dropRefused {
+    outline: 2px dashed var(--color-danger);
+    outline-offset: -2px;
+    background-color: var(--color-danger_plain20);
+    cursor: not-allowed;
+}

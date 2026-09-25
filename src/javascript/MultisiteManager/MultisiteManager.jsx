@@ -2,6 +2,7 @@ import React from 'react';
 import {useTranslation} from 'react-i18next';
 import {LayoutModule, Loader, Typography} from '@jahia/moonstone';
 import {useHasAccess} from './useHasAccess';
+import {DropCheckProvider} from './DropCheck.context';
 import Pane from './Pane';
 import {PANES} from './MultisiteManager.constants';
 import styles from './MultisiteManager.scss';
@@ -45,9 +46,11 @@ export const MultisiteManager = () => {
         <LayoutModule
             title={t('multisite-manager:label.title')}
             content={
-                <div className={styles.layout} data-sel-role="multisite-manager">
-                    {PANES.map(pane => <Pane key={pane} pane={pane}/>)}
-                </div>
+                <DropCheckProvider>
+                    <div className={styles.layout} data-sel-role="multisite-manager">
+                        {PANES.map(pane => <Pane key={pane} pane={pane}/>)}
+                    </div>
+                </DropCheckProvider>
             }
         />
     );

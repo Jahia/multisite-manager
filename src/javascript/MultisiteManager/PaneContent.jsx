@@ -12,6 +12,8 @@ import {useTransfer} from './useTransfer';
 import {REDUX_KEY} from './MultisiteManager.constants';
 import {canDropInto, DRAG_TYPE, toDraggable} from './dragAndDrop';
 import {flattenTree} from './treeRows';
+import {isFolder} from './dragAndDrop';
+import {useDropCheck} from './DropCheck.context';
 import ContentRow from './ContentRow';
 import styles from './MultisiteManager.scss';
 
@@ -45,6 +47,7 @@ const Tree = ({pane, site, mode, reloadCount}) => {
 
     const rootPath = `/sites/${site}`;
     const {transfer} = useTransfer();
+    const {register, accepts} = useDropCheck();
     // Survives a re-query, which is what lets the tree stay on screen while a branch opens
     const lastRows = useRef([]);
 
@@ -96,7 +99,7 @@ const Tree = ({pane, site, mode, reloadCount}) => {
         // Only when a folder has been chosen. It used to fall back to the site root, which accepts
         // almost nothing - dropping a file there was refused by the server and looked like the
         // drop had simply been ignored.
-        canDrop: item => Boolean(path) && canDropInto(item.nodes, path),
+        canDrop: item => Boolean(path) && canDropInto(item.nodes, path) && accepts(path),
         drop: (item, monitor) => {
             // A row under the pointer has already handled it
             if (!monitor.didDrop() && path) {
@@ -124,6 +127,12 @@ const Tree = ({pane, site, mode, reloadCount}) => {
 
     const rows = fresh.length > 0 ? fresh : lastRows.current;
 
+    // Which folders this pane is showing, so a drag can ask about all of them at once
+    register(pane, rows
+        .map(row => row.node)
+        .filter(node => isFolder(node) || node.primaryNodeType?.name === 'jnt:virtualsite')
+        .map(node => node.path));
+
     if (rows.length === 0) {
         // Nothing to keep and nothing arrived: either the first load, or a site that really is bare
         return loading ?
@@ -149,7 +158,11 @@ const Tree = ({pane, site, mode, reloadCount}) => {
 
     return (
         <div ref={dropOnPane}
-             className={clsx(styles.contentList, isOverPane && canDropOnPane && styles.dropInto)}
+             className={clsx(
+                 styles.contentList,
+                 isOverPane && canDropOnPane && styles.dropInto,
+                 isOverPane && !canDropOnPane && styles.dropRefused
+             )}
              data-sel-role={`multisite-content-${pane}`}
         >
             {failure && (
@@ -188,6 +201,7 @@ const Tree = ({pane, site, mode, reloadCount}) => {
                                     isSelected={selectedPaths.has(row.node.path)}
                                     isPasted={highlightedPaths.has(row.node.path)}
                                     isCurrent={row.node.path === path}
+                                    accepts={accepts}
                                     onToggle={toggle}
                                     onDropInto={onDropInto}
                                     onSetCurrent={nodePath => dispatch(msSetPath(pane, nodePath))}

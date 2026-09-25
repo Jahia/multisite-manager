@@ -6,6 +6,7 @@ import {useDrag, useDrop} from 'react-dnd';
 import {Button, ChevronDown, ChevronRight, Checkbox, TableBodyCell, TableRow} from '@jahia/moonstone';
 import {NodeIcon} from '@jahia/jcontent';
 import {canDropInto, DRAG_TYPE, isFolder, toDraggable} from './dragAndDrop';
+import {useDropCheck} from './DropCheck.context';
 import {isImage} from './fileUtils';
 import ThumbnailPreview from './ThumbnailPreview';
 import styles from './MultisiteManager.scss';
@@ -20,7 +21,7 @@ const INDENT_PX = 24;
  * Its own component because a row needs hooks, and hooks cannot be called from inside a map.
  */
 export const ContentRow = ({
-    node, pane, depth, hasChildren, isOpen, isSelected, isPasted, isCurrent, selection,
+    node, pane, depth, hasChildren, isOpen, isSelected, isPasted, isCurrent, selection, accepts,
     onToggle, onDropInto, onSetOpen, onSetCurrent
 }) => {
     const canHold = isFolder(node) || node.primaryNodeType?.name === 'jnt:virtualsite';
@@ -32,20 +33,25 @@ export const ContentRow = ({
 
     const {t} = useTranslation('multisite-manager');
 
+    const {prime, clear} = useDropCheck();
+
     const [{isDragging}, drag] = useDrag({
         type: DRAG_TYPE,
         // Dragging a row that is part of the selection takes the whole selection; dragging any
         // other row takes just that one, without disturbing what was selected
-        item: () => ({
-            fromPane: pane,
-            nodes: isSelected && selection.length > 0 ? selection : [toDraggable(node)]
-        }),
+        item: () => {
+            const nodes = isSelected && selection.length > 0 ? selection : [toDraggable(node)];
+            // One query, now, for every folder on screen - so the rest of the drag needs none
+            prime(nodes);
+            return {fromPane: pane, nodes};
+        },
+        end: () => clear(),
         collect: monitor => ({isDragging: monitor.isDragging()})
     });
 
     const [{isOver, canDrop}, drop] = useDrop({
         accept: DRAG_TYPE,
-        canDrop: item => canHold && canDropInto(item.nodes, node.path),
+        canDrop: item => canHold && canDropInto(item.nodes, node.path) && accepts(node.path),
         drop: item => onDropInto(item, node.path),
         collect: monitor => ({isOver: monitor.isOver({shallow: true}), canDrop: monitor.canDrop()})
     });
@@ -55,6 +61,8 @@ export const ContentRow = ({
                   className={clsx(
                       isPasted && styles.pastedRow,
                       isOver && canDrop && styles.dropInto,
+                      // Refused, and said so while the reader is still holding it
+                      isOver && !canDrop && styles.dropRefused,
                       isDragging && styles.dragging
                   )}
                   isSelected={isCurrent}
@@ -117,6 +125,7 @@ ContentRow.propTypes = {
     hasChildren: PropTypes.bool,
     isOpen: PropTypes.bool,
     isSelected: PropTypes.bool,
+    accepts: PropTypes.func,
     isPasted: PropTypes.bool,
     isCurrent: PropTypes.bool,
     selection: PropTypes.array,
