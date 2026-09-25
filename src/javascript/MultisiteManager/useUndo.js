@@ -2,7 +2,8 @@ import {useState} from 'react';
 import {useApolloClient} from '@apollo/client';
 import {useDispatch} from 'react-redux';
 import gql from 'graphql-tag';
-import {msClearUndo, msHighlight, msOpenPaths, msReload} from './MultisiteManager.redux';
+import {msClearUndo, msHighlight, msOpenPaths, msReload, msRenamed} from './MultisiteManager.redux';
+import {nameToRestore} from './undoNaming';
 
 /**
  * Taking back the last transfer.
@@ -26,6 +27,18 @@ const MOVE_BACK = gql`
         jcr {
             pasteNode(mode: MOVE, pathOrId: $pathOrId, destParentPathOrId: $destParentPathOrId, namingConflictResolution: RENAME) {
                 node { uuid path }
+            }
+        }
+    }
+`;
+
+// A move that arrived renamed keeps that name coming back, so the name is put back separately
+const RENAME_NODE = gql`
+    mutation multisiteUndoRename($pathOrId: String!, $name: String!) {
+        jcr {
+            mutateNode(pathOrId: $pathOrId) {
+                rename(name: $name)
+                node { path }
             }
         }
     }
@@ -56,6 +69,8 @@ export const useUndo = () => {
         setIsUndoing(true);
         const failures = [];
         const restored = [];
+        // Names that could not be put back, because something has taken them since
+        const stillRenamed = [];
 
         for (const entry of snapshot.entries) {
             try {
@@ -66,6 +81,22 @@ export const useUndo = () => {
                         variables: {pathOrId: entry.uuid, destParentPathOrId: entry.previousParent}
                     });
                     restored.push(entry.previousParent);
+
+                    const wanted = nameToRestore(entry);
+                    if (wanted) {
+                        try {
+                            // eslint-disable-next-line no-await-in-loop
+                            await client.mutate({
+                                mutation: RENAME_NODE,
+                                variables: {pathOrId: entry.uuid, name: wanted}
+                            });
+                        } catch (renameError) {
+                            // It is back where it belongs, just not under its old name. Worth
+                            // saying, not worth calling the undo a failure.
+                            console.warn('Could not restore the name of ' + entry.path, renameError);
+                            stillRenamed.push({from: wanted, to: entry.landedName});
+                        }
+                    }
                 } else {
                     // eslint-disable-next-line no-await-in-loop
                     await client.mutate({mutation: DELETE_NODE, variables: {pathOrId: entry.uuid}});
@@ -82,6 +113,7 @@ export const useUndo = () => {
             dispatch(msReload(snapshot.fromPane));
         }
 
+        dispatch(msRenamed(snapshot.fromPane || snapshot.pane, stillRenamed));
         dispatch(msHighlight(snapshot.pane, []));
         dispatch(msReload(snapshot.pane));
 
