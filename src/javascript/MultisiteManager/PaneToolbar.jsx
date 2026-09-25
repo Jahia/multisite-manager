@@ -2,10 +2,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {useDispatch, useSelector} from 'react-redux';
 import {useTranslation} from 'react-i18next';
-import {Button, Copy, Cut, Paste, Typography} from '@jahia/moonstone';
+import {Button, Copy, Cut, Paste, PasteAsReference, Typography} from '@jahia/moonstone';
 import {msClearClipboard, msSetClipboard, msSetSelection} from './MultisiteManager.redux';
 import {OTHER_PANE, REDUX_KEY} from './MultisiteManager.constants';
 import {useTransfer} from './useTransfer';
+import {useReferenceCheck} from './referenceRules';
 import styles from './MultisiteManager.scss';
 
 /**
@@ -29,6 +30,14 @@ export const PaneToolbar = ({pane}) => {
     const hasSelection = selection.length > 0;
     const canPaste = clipboard.nodes.length > 0 && Boolean(path) && !isPasting;
 
+    // Whether these particular nodes can be referenced in this particular folder. Cut is excluded
+    // the way jContent excludes it: referencing something you are in the middle of moving makes no
+    // sense, and the clipboard would be spent either way.
+    const {canReference, typeByPath} = useReferenceCheck(
+        clipboard.type === 'cut' ? null : path,
+        clipboard.nodes
+    );
+
     const onCopyCut = type => {
         dispatch(msSetClipboard(type, selection));
         dispatch(msSetSelection(pane, []));
@@ -47,6 +56,17 @@ export const PaneToolbar = ({pane}) => {
         if (clipboard.type === 'cut' && failures.length === 0) {
             dispatch(msClearClipboard());
         }
+    };
+
+    const onPasteAsReference = async () => {
+        await transfer({
+            clipboard,
+            toPane: pane,
+            destination: path,
+            asReferenceTypes: typeByPath
+        });
+        // The clipboard survives on purpose: referencing the same thing from several places is the
+        // ordinary use, not the exception
     };
 
     return (
@@ -74,6 +94,15 @@ export const PaneToolbar = ({pane}) => {
                     disabled={!canPaste}
                     data-sel-role="multisite-paste"
                     onClick={onPaste}
+            />
+            <Button size="default"
+                    variant="ghost"
+                    icon={<PasteAsReference/>}
+                    label={t('multisite-manager:label.pasteReference')}
+                    disabled={!canPaste || !canReference}
+                    title={t('multisite-manager:label.pasteReferenceHint')}
+                    data-sel-role="multisite-paste-reference"
+                    onClick={onPasteAsReference}
             />
             <div className={styles.toolbarStatus}>
                 <Typography variant="caption">

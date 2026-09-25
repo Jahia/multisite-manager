@@ -11,6 +11,8 @@
       "paste": "Coller",
       "pasteInto": "{{count}} prêt — coller dans « {{folder}} »",
       "pasteInto_plural": "{{count}} prêts — coller dans « {{folder}} »",
+      "pasteReference": "Coller comme référence",
+      "pasteReferenceHint": "Créer un lien vers l’original plutôt qu’une copie. Impossible pour les pages, ou dans un dossier de médias.",
       "selectSite": "Choisissez un site pour voir son contenu",
       "selected": "{{count}} sélectionné",
       "selected_plural": "{{count}} sélectionnés",

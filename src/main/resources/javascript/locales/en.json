@@ -11,6 +11,8 @@
       "paste": "Paste",
       "pasteInto": "{{count}} ready — paste into “{{folder}}”",
       "pasteInto_plural": "{{count}} ready — paste into “{{folder}}”",
+      "pasteReference": "Paste as reference",
+      "pasteReferenceHint": "Create a link to the original rather than a copy. Not possible for pages, or into a media folder.",
       "selectSite": "Choose a site to see what it holds",
       "selected": "{{count}} selected",
       "selected_plural": "{{count}} selected",

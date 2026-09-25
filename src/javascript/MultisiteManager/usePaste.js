@@ -36,6 +36,24 @@ const MOVE_NODE = gql`
     }
 `;
 
+/**
+ * A reference is a new node of a reference type whose j:node points back at the original, which is
+ * why this is an addNode rather than a pasteNode. Mirrors jContent's own mutation, including
+ * passing the source path as the weak reference value and letting the server pick a free name.
+ */
+const PASTE_REFERENCE = gql`
+    mutation multisitePasteReference($pathOrId: String!, $destParentPathOrId: String!, $destName: String!, $referenceType: String!) {
+        jcr {
+            pasteNode: addNode(name: $destName, primaryNodeType: $referenceType, parentPathOrId: $destParentPathOrId, useAvailableNodeName: true) {
+                mutateProperty(name: "j:node") {
+                    setValue(value: $pathOrId)
+                }
+                node { uuid path }
+            }
+        }
+    }
+`;
+
 export const usePaste = () => {
     const client = useApolloClient();
     const [isPasting, setIsPasting] = useState(false);
@@ -79,7 +97,55 @@ export const usePaste = () => {
         return {pasted, failures, paths};
     };
 
-    return {paste, isPasting};
+    /**
+     * Paste references to the clipboard rather than the things themselves.
+     *
+     * @param {Array} nodes what to reference
+     * @param {string} destination path of the folder to create the references in
+     * @param {object} typeByPath the reference type for each node, from the rules check
+     * @returns {Promise<{pasted: number, failures: Array, paths: string[]}>} what happened
+     */
+    const pasteAsReference = async (nodes, destination, typeByPath) => {
+        setIsPasting(true);
+        const failures = [];
+        const paths = [];
+        let pasted = 0;
+
+        for (const node of nodes) {
+            const referenceType = typeByPath[node.path];
+            if (!referenceType) {
+                failures.push({node, error: new Error('Nothing can reference ' + node.path)});
+                continue;
+            }
+
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                const {data} = await client.mutate({
+                    mutation: PASTE_REFERENCE,
+                    variables: {
+                        pathOrId: node.path,
+                        destParentPathOrId: destination,
+                        destName: node.name,
+                        referenceType
+                    }
+                });
+                const landed = data?.jcr?.pasteNode?.node?.path;
+                if (landed) {
+                    paths.push(landed);
+                }
+
+                pasted += 1;
+            } catch (e) {
+                console.error('Could not reference ' + node.path + ' in ' + destination, e);
+                failures.push({node, error: e});
+            }
+        }
+
+        setIsPasting(false);
+        return {pasted, failures, paths};
+    };
+
+    return {paste, pasteAsReference, isPasting};
 };
 
 export default usePaste;

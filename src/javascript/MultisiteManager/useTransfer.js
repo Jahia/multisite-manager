@@ -11,7 +11,7 @@ import {usePaste} from './usePaste';
  */
 export const useTransfer = () => {
     const dispatch = useDispatch();
-    const {paste, isPasting} = usePaste();
+    const {paste, pasteAsReference, isPasting} = usePaste();
 
     /**
      * @param {object} params where things are going
@@ -21,8 +21,11 @@ export const useTransfer = () => {
      * @param {string} [params.fromPane] the pane it left, when a move empties it
      * @returns {Promise<{failures: Array, paths: string[]}>} what happened
      */
-    const transfer = async ({clipboard, toPane, destination, fromPane}) => {
-        const {failures, paths} = await paste(clipboard, destination);
+    const transfer = async ({clipboard, toPane, destination, fromPane, asReferenceTypes}) => {
+        // A reference never empties the source, so fromPane is irrelevant to it
+        const {failures, paths} = asReferenceTypes ?
+            await pasteAsReference(clipboard.nodes, destination, asReferenceTypes) :
+            await paste(clipboard, destination);
 
         // A destination that cannot hold what was dropped is the common failure, and used to be
         // invisible: the server refused, the console recorded it, and the screen said nothing.
@@ -43,7 +46,7 @@ export const useTransfer = () => {
         dispatch(msReload(toPane));
 
         // Only a move leaves a hole behind, and only if the source is a different pane
-        if (clipboard.type === 'cut' && fromPane && fromPane !== toPane) {
+        if (!asReferenceTypes && clipboard.type === 'cut' && fromPane && fromPane !== toPane) {
             dispatch(msReload(fromPane));
         }
 

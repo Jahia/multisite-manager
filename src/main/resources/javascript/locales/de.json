@@ -11,6 +11,8 @@
       "paste": "Einfügen",
       "pasteInto": "{{count}} bereit — in „{{folder}}“ einfügen",
       "pasteInto_plural": "{{count}} bereit — in „{{folder}}“ einfügen",
+      "pasteReference": "Als Referenz einfügen",
+      "pasteReferenceHint": "Einen Verweis auf das Original statt einer Kopie anlegen. Nicht möglich für Seiten oder in einen Medienordner.",
       "selectSite": "Wählen Sie eine Site, um ihren Inhalt zu sehen",
       "selected": "{{count}} ausgewählt",
       "selected_plural": "{{count}} ausgewählt",
