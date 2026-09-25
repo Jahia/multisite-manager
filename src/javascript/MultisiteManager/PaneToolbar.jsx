@@ -3,9 +3,9 @@ import PropTypes from 'prop-types';
 import {useDispatch, useSelector} from 'react-redux';
 import {useTranslation} from 'react-i18next';
 import {Button, Copy, Cut, Paste, Typography} from '@jahia/moonstone';
-import {msClearClipboard, msHighlight, msReload, msSetClipboard, msSetSelection} from './MultisiteManager.redux';
+import {msClearClipboard, msSetClipboard, msSetSelection} from './MultisiteManager.redux';
 import {OTHER_PANE, REDUX_KEY} from './MultisiteManager.constants';
-import {usePaste} from './usePaste';
+import {useTransfer} from './useTransfer';
 import styles from './MultisiteManager.scss';
 
 /**
@@ -18,7 +18,7 @@ import styles from './MultisiteManager.scss';
 export const PaneToolbar = ({pane}) => {
     const {t} = useTranslation('multisite-manager');
     const dispatch = useDispatch();
-    const {paste, isPasting} = usePaste();
+    const {transfer, isPasting} = useTransfer();
 
     const {selection, path, clipboard} = useSelector(state => ({
         selection: state[REDUX_KEY][pane].selection,
@@ -35,22 +35,17 @@ export const PaneToolbar = ({pane}) => {
     };
 
     const onPaste = async () => {
-        const {failures, paths} = await paste(clipboard, path);
+        const {failures} = await transfer({
+            clipboard,
+            toPane: pane,
+            fromPane: OTHER_PANE[pane],
+            destination: path
+        });
 
-        // A cut is spent once it has been pasted; a copy stays, so the same item can be put in
-        // several places without copying it again. Either way the destination has to re-read
-        // itself, and a move empties the source too.
+        // A cut is spent once pasted; a copy stays, so the same item can be put in several places
+        // without copying it again.
         if (clipboard.type === 'cut' && failures.length === 0) {
             dispatch(msClearClipboard());
-            dispatch(msReload(OTHER_PANE[pane]));
-        }
-
-        dispatch(msReload(pane));
-
-        // Tint where they landed. The server renames on conflict, so these are the paths it
-        // reports back rather than the ones we asked for.
-        if (paths.length > 0) {
-            dispatch(msHighlight(pane, paths));
         }
     };
 

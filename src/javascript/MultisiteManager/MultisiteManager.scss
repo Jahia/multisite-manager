@@ -80,3 +80,10 @@
     background-color: var(--color-success_plain20) !important;
     transition: background-color 600ms ease-out;
 }
+
+/* The folder a drop would land in, while a drag is over it */
+.dropInto {
+    outline: 2px dashed var(--color-accent);
+    outline-offset: -2px;
+    background-color: var(--color-accent_light60);
+}
