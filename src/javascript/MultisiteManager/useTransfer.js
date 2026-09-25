@@ -1,5 +1,5 @@
 import {useDispatch} from 'react-redux';
-import {msFailure, msHighlight, msReload} from './MultisiteManager.redux';
+import {msFailure, msHighlight, msOpenPaths, msReload} from './MultisiteManager.redux';
 import {usePaste} from './usePaste';
 
 /**
@@ -31,6 +31,14 @@ export const useTransfer = () => {
             destination,
             name: failures[0].node.displayName || failures[0].node.name
         }));
+
+        // Open the destination, so something dropped on a closed folder can be seen landing in it
+        // rather than appearing to vanish. Harmless when it was already open, and it also brings
+        // the branch's children into the query, which is what the tint needs to have a row to sit
+        // on.
+        if (paths.length > 0) {
+            dispatch(msOpenPaths(toPane, [destination]));
+        }
 
         dispatch(msReload(toPane));
 
