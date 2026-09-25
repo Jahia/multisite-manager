@@ -18,6 +18,7 @@ import {isFolder} from './dragAndDrop';
 import {useDropCheck} from './DropCheck.context';
 import {paneSearchMode} from './paneAccordions';
 import {useKeyboard} from './useKeyboard';
+import {registerPaneElement} from './paneFocus';
 import {usePaneClipboard} from './usePaneClipboard';
 import ContentRow from './ContentRow';
 import styles from './MultisiteManager.scss';
@@ -53,7 +54,7 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
     const {t} = useTranslation('multisite-manager');
     const dispatch = useDispatch();
     const {language, uilang} = useSelector(state => ({language: state.language, uilang: state.uilang}));
-    const {selection, openPaths, highlighted, path, failure, renamed, progress, focusIndex} =
+    const {selection, openPaths, highlighted, path, failure, renamed, progress, focusIndex, selectionAnchor} =
         useSelector(state => state[REDUX_KEY][pane]);
     const {copy, cut, paste} = usePaneClipboard(pane);
 
@@ -143,7 +144,7 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
     // rows are answers to a different question
     const rows = (fresh.length > 0 || isSearching) ? fresh : lastRows.current;
 
-    const onKeyDown = useKeyboard({pane, rows, focusIndex, openPaths, selection, onCopy: copy, onCut: cut, onPaste: paste});
+    const onKeyDown = useKeyboard({pane, rows, focusIndex, selectionAnchor, openPaths, selection, onCopy: copy, onCut: cut, onPaste: paste});
     const focused = Math.min(Math.max(focusIndex, 0), rows.length - 1);
 
     // Only the rows on screen are built. A site with a large media folder produces thousands once
@@ -220,6 +221,8 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
         <div ref={element => {
                  scrollRef.current = element;
                  dropOnPane(element);
+                 // So the other pane can hand focus here on tab
+                 registerPaneElement(pane, element);
              }}
              // Focusable so it can receive keys, and given a role that says what it is
              role="grid"

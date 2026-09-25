@@ -1,6 +1,7 @@
 import {useCallback} from 'react';
 import {useDispatch} from 'react-redux';
 import {keyboardActions} from './keyboardActions';
+import {focusPane} from './paneFocus';
 
 /**
  * Driving a pane from the keyboard.
@@ -15,16 +16,25 @@ import {keyboardActions} from './keyboardActions';
  *   ctrl+c / x     copy or cut the selection
  *   ctrl+v         paste into this pane
  *   escape         clear the selection
+ *   shift+arrow    extend the selection from where the range began
+ *   ctrl+a         select everything in this pane
+ *   tab            hand over to the other pane
  *
  * The deciding is in keyboardActions, which is pure and tested; this only carries it out.
  */
-export const useKeyboard = ({pane, rows, focusIndex, openPaths, selection, onCopy, onCut, onPaste}) => {
+export const useKeyboard = ({pane, rows, focusIndex, selectionAnchor, openPaths, selection, onCopy, onCut, onPaste}) => {
     const dispatch = useDispatch();
 
     return useCallback(event => {
-        const {handled, actions, intent} = keyboardActions(event, {pane, rows, focusIndex, openPaths, selection});
+        const {handled, actions, intent, focusPane: handOverTo} = keyboardActions(
+            event, {pane, rows, focusIndex, selectionAnchor, openPaths, selection}
+        );
 
-        if (handled) {
+        // The key is only swallowed if the other pane could actually take focus, so tabbing at an
+        // empty pane falls through to the browser rather than going nowhere
+        const handedOver = handOverTo ? focusPane(handOverTo) : false;
+
+        if (handled && (!handOverTo || handedOver)) {
             event.preventDefault();
         }
 
@@ -37,7 +47,7 @@ export const useKeyboard = ({pane, rows, focusIndex, openPaths, selection, onCop
         } else if (intent === 'paste') {
             onPaste();
         }
-    }, [dispatch, pane, rows, focusIndex, openPaths, selection, onCopy, onCut, onPaste]);
+    }, [dispatch, pane, rows, focusIndex, selectionAnchor, openPaths, selection, onCopy, onCut, onPaste]);
 };
 
 export default useKeyboard;

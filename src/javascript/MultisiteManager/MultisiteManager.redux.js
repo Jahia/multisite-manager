@@ -21,6 +21,9 @@ const emptyPane = {
     // Which row the keyboard is on. Separate from the selection and from the current folder:
     // arrowing through rows must not select them.
     focusIndex: 0,
+    // Where a range selection started. Shift and an arrow extends from here rather than from
+    // wherever the cursor happens to be now.
+    selectionAnchor: null,
     // Paths of rows just pasted into this pane, tinted briefly so the result of the action is
     // visible without having to hunt for it
     highlighted: [],
@@ -49,6 +52,7 @@ export const MS_SEARCH = 'MULTISITE_SEARCH';
 export const MS_FOCUS = 'MULTISITE_FOCUS';
 export const MS_RENAMED = 'MULTISITE_RENAMED';
 export const MS_PROGRESS = 'MULTISITE_PROGRESS';
+export const MS_ANCHOR = 'MULTISITE_ANCHOR';
 
 export const msSetSite = (pane, site) => ({type: MS_SET_SITE, pane, site});
 export const msSetPath = (pane, path) => ({type: MS_SET_PATH, pane, path});
@@ -63,6 +67,7 @@ export const msFocus = (pane, focusIndex) => ({type: MS_FOCUS, pane, focusIndex}
 export const msFailure = (pane, failure) => ({type: MS_FAILURE, pane, failure});
 export const msRenamed = (pane, renamed) => ({type: MS_RENAMED, pane, renamed});
 export const msProgress = (pane, progress) => ({type: MS_PROGRESS, pane, progress});
+export const msAnchor = (pane, selectionAnchor) => ({type: MS_ANCHOR, pane, selectionAnchor});
 
 /** The type is 'copy' or 'cut'; an empty nodes list means the clipboard is empty. */
 export const msSetClipboard = (type, nodes) => ({type: MS_CLIPBOARD, clipboard: {type, nodes}});
@@ -89,7 +94,11 @@ const paneReducer = (state, action) => {
         case MS_CLOSE_PATHS:
             return {...state, openPaths: state.openPaths.filter(p => !action.paths.includes(p))};
         case MS_SET_SELECTION:
-            return {...state, selection: action.selection};
+            return {
+                ...state,
+                selection: action.selection,
+                selectionAnchor: action.selection.length === 0 ? null : state.selectionAnchor
+            };
         case MS_RELOAD:
             return {...state, reloadCount: state.reloadCount + 1};
         case MS_FOCUS:
@@ -105,6 +114,8 @@ const paneReducer = (state, action) => {
             return {...state, renamed: action.renamed};
         case MS_PROGRESS:
             return {...state, progress: action.progress};
+        case MS_ANCHOR:
+            return {...state, selectionAnchor: action.selectionAnchor};
         default:
             return state;
     }

@@ -21,7 +21,8 @@ independent panes, each a site of its own.
 - Thumbnail preview on hovering an image
 - Publication status on every row, so you can see what is published before moving it
 - Search each site by name and title
-- Full keyboard control: arrows, space, enter, Ctrl+C / X / V
+- Full keyboard control: arrows to move, tab between the panes, space and shift+arrows to
+  select, Ctrl+A, enter, Ctrl+C / X / V
 - Each pane reopens on the site it was last showing
 - Says when something was renamed on arrival, rather than leaving you to find out
 - Per-pane refresh, and a banner when a transfer is refused
@@ -36,7 +37,7 @@ enough** — this module consumes jContent's published API (`appShell.remotes.jc
 
 ```bash
 yarn install
-yarn test                 # 77 specs, about 3 seconds
+yarn test                 # 94 specs, about 3 seconds
 yarn lint
 yarn build:production     # or: mvn clean package
 ```
@@ -71,7 +72,8 @@ accepts none of them, and a page cannot be referenced at all.
   naming — and each was mutation-checked. Nothing yet proves what it *does* to a repository: that a
   paste lands, a reference resolves, a drag refuses, or that the permission check gates anything.
   That needs Cypress against a live Jahia.
-- No virtualisation — 200 rows per branch.
+- Each branch is fetched 200 rows at a time, so a folder with more than that shows only the first
+  200. Rendering itself is virtualised, so an open tree of several thousand rows stays responsive.
 - The drag-time compatibility check matches on primary node type only, while a node can also
   satisfy a constraint through a supertype or a mixin. It therefore errs towards refusing, and the
   server remains the authority - anything that slips through is refused there and reported in the

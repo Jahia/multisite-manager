@@ -1,5 +1,5 @@
 import {keyboardActions} from './keyboardActions';
-import {MS_CLOSE_PATHS, MS_FOCUS, MS_OPEN_PATHS, MS_SET_PATH, MS_SET_SELECTION} from './MultisiteManager.redux';
+import {MS_ANCHOR, MS_CLOSE_PATHS, MS_FOCUS, MS_OPEN_PATHS, MS_SET_PATH, MS_SET_SELECTION} from './MultisiteManager.redux';
 
 const row = (name, depth, hasChildren = false) => ({
     node: {path: '/sites/a/' + name, name, uuid: 'u-' + name},
@@ -89,6 +89,61 @@ describe('keyboardActions', () => {
     });
 
     it('should ignore keys it has no meaning for', () => {
-        expect(press('Tab')).toMatchObject({handled: false, actions: [], intent: null});
+        expect(press('F7')).toMatchObject({handled: false, actions: [], intent: null});
+    });
+
+    describe('moving between the panes', () => {
+        it('should hand over to the other pane with tab', () => {
+            expect(press('Tab')).toMatchObject({handled: true, focusPane: 'right', actions: []});
+        });
+
+        it('should hand back from the other side', () => {
+            const result = keyboardActions(
+                {key: 'Tab', ctrlKey: false, metaKey: false, shiftKey: false, altKey: false},
+                {pane: 'right', rows, focusIndex: 0, openPaths: [], selection: []}
+            );
+            expect(result.focusPane).toBe('left');
+        });
+
+        it('should leave shift+tab alone, so there is a way out of the trees', () => {
+            expect(press('Tab', {}, {shiftKey: true}).handled).toBe(false);
+        });
+    });
+
+    describe('selecting a range', () => {
+        it('should extend the selection with shift and an arrow', () => {
+            const {actions} = press('ArrowDown', {focusIndex: 0}, {shiftKey: true});
+            const selection = actions.find(a => a.selection)?.selection;
+            expect(selection.map(n => n.name)).toEqual(['site', 'home']);
+        });
+
+        it('should extend from where the range began, not from the cursor', () => {
+            // Anchored at 0 and now at 2, pressing shift+down must cover 0..3 rather than 2..3
+            const {actions} = press('ArrowDown', {focusIndex: 2, selectionAnchor: 0}, {shiftKey: true});
+            const selection = actions.find(a => a.selection)?.selection;
+            expect(selection.map(n => n.name)).toEqual(['site', 'home', 'child', 'files']);
+        });
+
+        it('should shrink again when the direction reverses', () => {
+            const {actions} = press('ArrowUp', {focusIndex: 3, selectionAnchor: 1}, {shiftKey: true});
+            const selection = actions.find(a => a.selection)?.selection;
+            expect(selection.map(n => n.name)).toEqual(['home', 'child']);
+        });
+
+        it('should still move the cursor while extending', () => {
+            const {actions} = press('ArrowDown', {focusIndex: 0}, {shiftKey: true});
+            expect(actions.find(a => a.type === MS_FOCUS)).toMatchObject({focusIndex: 1});
+        });
+
+        it('should select every row with ctrl+a', () => {
+            const {actions} = press('a', {}, {ctrlKey: true});
+            const selection = actions.find(a => a.selection)?.selection;
+            expect(selection).toHaveLength(rows.length);
+        });
+
+        it('should remember where a range started when space selects a row', () => {
+            const {actions} = press(' ', {focusIndex: 2});
+            expect(actions.find(a => a.type === MS_ANCHOR)).toMatchObject({selectionAnchor: 2});
+        });
     });
 });
