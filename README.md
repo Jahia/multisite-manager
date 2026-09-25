@@ -19,6 +19,10 @@ independent panes, each a site of its own.
 - References show the site they point at, with the full path as a tooltip
 - A folder that will not accept what is being dragged says so while you are still holding it
 - Thumbnail preview on hovering an image
+- Publication status on every row, so you can see what is published before moving it
+- Search each site by name and title
+- Full keyboard control: arrows, space, enter, Ctrl+C / X / V
+- Each pane reopens on the site it was last showing
 - Per-pane refresh, and a banner when a transfer is refused
 
 ## Requirements
