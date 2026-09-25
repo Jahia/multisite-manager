@@ -19,7 +19,8 @@ const INDENT_PX = 24;
  * Its own component because a row needs hooks, and hooks cannot be called from inside a map.
  */
 export const ContentRow = ({
-    node, pane, depth, hasChildren, isOpen, isSelected, isPasted, selection, onToggle, onDropInto, onSetOpen
+    node, pane, depth, hasChildren, isOpen, isSelected, isPasted, isCurrent, selection,
+    onToggle, onDropInto, onSetOpen, onSetCurrent
 }) => {
     const canHold = isFolder(node) || node.primaryNodeType?.name === 'jnt:virtualsite';
     const previewable = isImage(node);
@@ -51,13 +52,18 @@ export const ContentRow = ({
                       isOver && canDrop && styles.dropInto,
                       isDragging && styles.dragging
                   )}
+                  isSelected={isCurrent}
                   isHighlighted={isSelected}
-                  onClick={() => onToggle(node)}
+                  onClick={() => canHold && onSetCurrent(node.path)}
                   onMouseMove={previewable ? (event => setPreviewAt({x: event.clientX, y: event.clientY})) : undefined}
                   onMouseLeave={previewable ? (() => setPreviewAt(null)) : undefined}
         >
             <TableBodyCell className={styles.checkboxCell}>
-                <Checkbox checked={isSelected} onChange={() => onToggle(node)}/>
+                {/* Ticking a row is choosing what to move; clicking it is choosing where to put
+                    things. Two different questions, so two different gestures. */}
+                <Checkbox checked={isSelected}
+                          onClick={event => event.stopPropagation()}
+                          onChange={() => onToggle(node)}/>
             </TableBodyCell>
             <TableBodyCell className={styles.nameCell}>
                 {/*
@@ -99,10 +105,12 @@ ContentRow.propTypes = {
     isOpen: PropTypes.bool,
     isSelected: PropTypes.bool,
     isPasted: PropTypes.bool,
+    isCurrent: PropTypes.bool,
     selection: PropTypes.array,
     onToggle: PropTypes.func.isRequired,
     onDropInto: PropTypes.func.isRequired,
-    onSetOpen: PropTypes.func.isRequired
+    onSetOpen: PropTypes.func.isRequired,
+    onSetCurrent: PropTypes.func.isRequired
 };
 
 export default ContentRow;

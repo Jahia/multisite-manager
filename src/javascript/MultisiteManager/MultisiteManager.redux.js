@@ -20,7 +20,9 @@ const emptyPane = {
     // visible without having to hunt for it
     highlighted: [],
     // Bumped to make a pane re-read its folder after something has been pasted into it
-    reloadCount: 0
+    reloadCount: 0,
+    // Why the last transfer into this pane failed, if it did. Shown until the next one is tried.
+    failure: null
 };
 
 export const MS_SET_SITE = 'MULTISITE_SET_SITE';
@@ -32,6 +34,7 @@ export const MS_SET_SELECTION = 'MULTISITE_SET_SELECTION';
 export const MS_RELOAD = 'MULTISITE_RELOAD';
 export const MS_CLIPBOARD = 'MULTISITE_CLIPBOARD';
 export const MS_HIGHLIGHT = 'MULTISITE_HIGHLIGHT';
+export const MS_FAILURE = 'MULTISITE_FAILURE';
 
 export const msSetSite = (pane, site) => ({type: MS_SET_SITE, pane, site});
 export const msSetPath = (pane, path) => ({type: MS_SET_PATH, pane, path});
@@ -41,6 +44,7 @@ export const msClosePaths = (pane, paths) => ({type: MS_CLOSE_PATHS, pane, paths
 export const msSetSelection = (pane, selection) => ({type: MS_SET_SELECTION, pane, selection});
 export const msReload = pane => ({type: MS_RELOAD, pane});
 export const msHighlight = (pane, paths) => ({type: MS_HIGHLIGHT, pane, paths});
+export const msFailure = (pane, failure) => ({type: MS_FAILURE, pane, failure});
 
 /** The type is 'copy' or 'cut'; an empty nodes list means the clipboard is empty. */
 export const msSetClipboard = (type, nodes) => ({type: MS_CLIPBOARD, clipboard: {type, nodes}});
@@ -53,9 +57,9 @@ const paneReducer = (state, action) => {
             // belong to the site it is leaving.
             return {...state, site: action.site, path: '', openPaths: [], selection: [], highlighted: []};
         case MS_SET_PATH:
-            // Moving to another folder drops the selection with it, so a later paste cannot act on
-            // rows the reader can no longer see
-            return {...state, path: action.path, selection: [], highlighted: []};
+            // The selection survives: in a tree the rows stay on screen, and picking the folder to
+            // paste into must not discard what was picked to move
+            return {...state, path: action.path, highlighted: []};
         case MS_SET_MODE:
             return {...state, mode: action.mode};
         case MS_OPEN_PATHS:
@@ -68,6 +72,8 @@ const paneReducer = (state, action) => {
             return {...state, reloadCount: state.reloadCount + 1};
         case MS_HIGHLIGHT:
             return {...state, highlighted: action.paths};
+        case MS_FAILURE:
+            return {...state, failure: action.failure};
         default:
             return state;
     }

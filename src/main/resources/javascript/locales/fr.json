@@ -1,18 +1,23 @@
 {
   "multisite-manager": {
     "label": {
-      "clipboard": "{{count}} dans le presse-papiers",
-      "clipboard_plural": "{{count}} dans le presse-papiers",
+      "chooseDestination": "{{count}} prêt — cliquez un dossier pour choisir où",
+      "chooseDestination_plural": "{{count}} prêts — cliquez un dossier pour choisir où",
       "copy": "Copier",
       "cut": "Couper",
       "empty": "Ce dossier est vide",
       "error": "Ce contenu n’a pas pu être lu",
       "name": "Nom",
       "paste": "Coller",
+      "pasteInto": "{{count}} prêt — coller dans « {{folder}} »",
+      "pasteInto_plural": "{{count}} prêts — coller dans « {{folder}} »",
       "selectSite": "Choisissez un site pour voir son contenu",
       "selected": "{{count}} sélectionné",
       "selected_plural": "{{count}} sélectionnés",
       "title": "Gestionnaire multisite",
+      "transferFailed": "{{count}} élément n’a pas pu être déplacé",
+      "transferFailedHint": "« {{name}} » ne peut pas être placé ici. Choisissez un dossier qui accepte ce type de contenu.",
+      "transferFailed_plural": "{{count}} éléments n’ont pas pu être déplacés",
       "type": "Type"
     }
   }

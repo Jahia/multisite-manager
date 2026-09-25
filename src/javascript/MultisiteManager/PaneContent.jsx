@@ -4,9 +4,9 @@ import {useDispatch, useSelector} from 'react-redux';
 import {useTranslation} from 'react-i18next';
 import {useDrop} from 'react-dnd';
 import clsx from 'clsx';
-import {Checkbox, Loader, Table, TableBody, TableHead, TableHeadCell, TableRow, Typography} from '@jahia/moonstone';
+import {Banner, Checkbox, Loader, Table, TableBody, TableHead, TableHeadCell, TableRow, Typography} from '@jahia/moonstone';
 import {useLayoutQuery} from '@jahia/jcontent';
-import {msClosePaths, msHighlight, msOpenPaths, msSetSelection} from './MultisiteManager.redux';
+import {msClosePaths, msHighlight, msOpenPaths, msSetPath, msSetSelection} from './MultisiteManager.redux';
 import {useTransfer} from './useTransfer';
 import {REDUX_KEY} from './MultisiteManager.constants';
 import {canDropInto, DRAG_TYPE, toDraggable} from './dragAndDrop';
@@ -40,7 +40,7 @@ const Tree = ({pane, site, mode}) => {
     const {t} = useTranslation('multisite-manager');
     const dispatch = useDispatch();
     const {language, uilang} = useSelector(state => ({language: state.language, uilang: state.uilang}));
-    const {selection, openPaths, highlighted, path} = useSelector(state => state[REDUX_KEY][pane]);
+    const {selection, openPaths, highlighted, path, failure} = useSelector(state => state[REDUX_KEY][pane]);
 
     const rootPath = `/sites/${site}`;
     const {transfer} = useTransfer();
@@ -80,11 +80,14 @@ const Tree = ({pane, site, mode}) => {
     // always a target even when every visible row is a leaf
     const [{isOverPane, canDropOnPane}, dropOnPane] = useDrop({
         accept: DRAG_TYPE,
-        canDrop: item => canDropInto(item.nodes, path || rootPath),
+        // Only when a folder has been chosen. It used to fall back to the site root, which accepts
+        // almost nothing - dropping a file there was refused by the server and looked like the
+        // drop had simply been ignored.
+        canDrop: item => Boolean(path) && canDropInto(item.nodes, path),
         drop: (item, monitor) => {
             // A row under the pointer has already handled it
-            if (!monitor.didDrop()) {
-                onDropInto(item, path || rootPath);
+            if (!monitor.didDrop() && path) {
+                onDropInto(item, path);
             }
         },
         collect: monitor => ({
@@ -136,6 +139,15 @@ const Tree = ({pane, site, mode}) => {
              className={clsx(styles.contentList, isOverPane && canDropOnPane && styles.dropInto)}
              data-sel-role={`multisite-content-${pane}`}
         >
+            {failure && (
+                <Banner variant="danger"
+                        className={styles.failureBanner}
+                        title={t('multisite-manager:label.transferFailed', {count: failure.count})}
+                        data-sel-role="multisite-failure"
+                >
+                    {t('multisite-manager:label.transferFailedHint', {name: failure.name})}
+                </Banner>
+            )}
             {loading && (
                 <div className={styles.treeLoading} data-sel-role="multisite-loading">
                     <Loader size="small"/>
@@ -162,8 +174,10 @@ const Tree = ({pane, site, mode}) => {
                                     selection={selection}
                                     isSelected={selectedPaths.has(row.node.path)}
                                     isPasted={highlightedPaths.has(row.node.path)}
+                                    isCurrent={row.node.path === path}
                                     onToggle={toggle}
                                     onDropInto={onDropInto}
+                                    onSetCurrent={nodePath => dispatch(msSetPath(pane, nodePath))}
                                     onSetOpen={(nodePath, open) => dispatch(open ?
                                         msOpenPaths(pane, [nodePath]) :
                                         msClosePaths(pane, [nodePath]))}

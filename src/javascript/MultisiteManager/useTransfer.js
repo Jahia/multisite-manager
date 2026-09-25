@@ -1,5 +1,5 @@
 import {useDispatch} from 'react-redux';
-import {msHighlight, msReload} from './MultisiteManager.redux';
+import {msFailure, msHighlight, msReload} from './MultisiteManager.redux';
 import {usePaste} from './usePaste';
 
 /**
@@ -23,6 +23,14 @@ export const useTransfer = () => {
      */
     const transfer = async ({clipboard, toPane, destination, fromPane}) => {
         const {failures, paths} = await paste(clipboard, destination);
+
+        // A destination that cannot hold what was dropped is the common failure, and used to be
+        // invisible: the server refused, the console recorded it, and the screen said nothing.
+        dispatch(msFailure(toPane, failures.length === 0 ? null : {
+            count: failures.length,
+            destination,
+            name: failures[0].node.displayName || failures[0].node.name
+        }));
 
         dispatch(msReload(toPane));
 

@@ -1,18 +1,23 @@
 {
   "multisite-manager": {
     "label": {
-      "clipboard": "{{count}} in clipboard",
-      "clipboard_plural": "{{count}} in clipboard",
+      "chooseDestination": "{{count}} ready — click a folder to choose where",
+      "chooseDestination_plural": "{{count}} ready — click a folder to choose where",
       "copy": "Copy",
       "cut": "Cut",
       "empty": "This folder is empty",
       "error": "This content could not be read",
       "name": "Name",
       "paste": "Paste",
+      "pasteInto": "{{count}} ready — paste into “{{folder}}”",
+      "pasteInto_plural": "{{count}} ready — paste into “{{folder}}”",
       "selectSite": "Choose a site to see what it holds",
       "selected": "{{count}} selected",
       "selected_plural": "{{count}} selected",
       "title": "Multisite manager",
+      "transferFailed": "{{count}} item could not be moved",
+      "transferFailedHint": "“{{name}}” cannot be placed here. Choose a folder that accepts this kind of content.",
+      "transferFailed_plural": "{{count}} items could not be moved",
       "type": "Type"
     }
   }

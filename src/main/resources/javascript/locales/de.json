@@ -1,18 +1,23 @@
 {
   "multisite-manager": {
     "label": {
-      "clipboard": "{{count}} in der Zwischenablage",
-      "clipboard_plural": "{{count}} in der Zwischenablage",
+      "chooseDestination": "{{count}} bereit — Ordner anklicken, um das Ziel zu wählen",
+      "chooseDestination_plural": "{{count}} bereit — Ordner anklicken, um das Ziel zu wählen",
       "copy": "Kopieren",
       "cut": "Ausschneiden",
       "empty": "Dieser Ordner ist leer",
       "error": "Dieser Inhalt konnte nicht gelesen werden",
       "name": "Name",
       "paste": "Einfügen",
+      "pasteInto": "{{count}} bereit — in „{{folder}}“ einfügen",
+      "pasteInto_plural": "{{count}} bereit — in „{{folder}}“ einfügen",
       "selectSite": "Wählen Sie eine Site, um ihren Inhalt zu sehen",
       "selected": "{{count}} ausgewählt",
       "selected_plural": "{{count}} ausgewählt",
       "title": "Multisite-Manager",
+      "transferFailed": "{{count}} Element konnte nicht verschoben werden",
+      "transferFailedHint": "„{{name}}“ kann hier nicht abgelegt werden. Wählen Sie einen Ordner, der diese Art von Inhalt aufnimmt.",
+      "transferFailed_plural": "{{count}} Elemente konnten nicht verschoben werden",
       "type": "Typ"
     }
   }

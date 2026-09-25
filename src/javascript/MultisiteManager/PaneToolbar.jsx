@@ -78,8 +78,12 @@ export const PaneToolbar = ({pane}) => {
             <div className={styles.toolbarStatus}>
                 <Typography variant="caption">
                     {hasSelection && t('multisite-manager:label.selected', {count: selection.length})}
-                    {!hasSelection && clipboard.nodes.length > 0 &&
-                        t('multisite-manager:label.clipboard', {count: clipboard.nodes.length})}
+                    {!hasSelection && clipboard.nodes.length > 0 && (path ?
+                        t('multisite-manager:label.pasteInto', {
+                            count: clipboard.nodes.length,
+                            folder: path.substring(path.lastIndexOf('/') + 1)
+                        }) :
+                        t('multisite-manager:label.chooseDestination', {count: clipboard.nodes.length}))}
                 </Typography>
             </div>
         </div>
