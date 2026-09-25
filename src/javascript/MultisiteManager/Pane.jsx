@@ -8,6 +8,7 @@ import {paneMode} from './paneAccordions';
 import PaneContent from './PaneContent';
 import PaneToolbar from './PaneToolbar';
 import PaneSearch from './PaneSearch';
+import {readRememberedSites, rememberSite} from './rememberedSites';
 import styles from './MultisiteManager.scss';
 
 /**
@@ -24,13 +25,21 @@ export const Pane = ({pane}) => {
     const mode = useSelector(state => state[REDUX_KEY][pane].mode);
     const currentSite = useSelector(state => state.site);
 
-    // Both panes open on the site the editor came from, which makes the first move - pick a
-    // different site on one side - obvious, and costs nothing if that is already what they wanted.
+    // Opens on the pair last used, falling back to the site the reader came from. Working between
+    // the same two sites for a while is the normal way this screen gets used, and starting on "the
+    // current site, twice" every time makes them redo a choice they already made.
     useEffect(() => {
-        if (!site && currentSite) {
-            dispatch(msSetSite(pane, currentSite));
+        if (!site) {
+            const remembered = readRememberedSites()[pane];
+            if (remembered || currentSite) {
+                dispatch(msSetSite(pane, remembered || currentSite));
+            }
         }
     }, [dispatch, pane, site, currentSite]);
+
+    // Written when it changes rather than when the pane closes: there is no close, and a tab that
+    // is simply abandoned should still be remembered.
+    useEffect(() => rememberSite(pane, site), [pane, site]);
 
     // With no accordion to click there is nothing to choose, so the pane names its own mode once
     useEffect(() => {
