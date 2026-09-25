@@ -6,7 +6,7 @@ import {Button, Copy, Cut, Paste, PasteAsReference, Typography} from '@jahia/moo
 import {msClearClipboard, msSetClipboard, msSetSelection} from './MultisiteManager.redux';
 import {OTHER_PANE, REDUX_KEY} from './MultisiteManager.constants';
 import {useTransfer} from './useTransfer';
-import {useReferenceCheck} from './referenceRules';
+import {useTransferCheck} from './transferRules';
 import styles from './MultisiteManager.scss';
 
 /**
@@ -28,15 +28,21 @@ export const PaneToolbar = ({pane}) => {
     }));
 
     const hasSelection = selection.length > 0;
-    const canPaste = clipboard.nodes.length > 0 && Boolean(path) && !isPasting;
+    const hasClipboard = clipboard.nodes.length > 0;
 
-    // Whether these particular nodes can be referenced in this particular folder. Cut is excluded
-    // the way jContent excludes it: referencing something you are in the middle of moving makes no
-    // sense, and the clipboard would be spent either way.
-    const {canReference, typeByPath} = useReferenceCheck(
-        clipboard.type === 'cut' ? null : path,
-        clipboard.nodes
-    );
+    // Asked of the repository rather than assumed: whether this folder accepts these things, and
+    // whether it accepts references to them. Both buttons were previously offered whenever there
+    // was anything on the clipboard, so a paste the destination could never accept looked available
+    // and then failed.
+    const {loading: isChecking, canPaste: typesAllowPaste, canReference, typeByPath} =
+        useTransferCheck(path, clipboard);
+
+    const canPaste = hasClipboard && Boolean(path) && !isPasting && !isChecking && typesAllowPaste;
+
+    // Referencing something you are in the middle of moving makes no sense, and jContent hides it
+    // for the same reason
+    const canPasteReference = hasClipboard && Boolean(path) && !isPasting && !isChecking &&
+        clipboard.type !== 'cut' && canReference;
 
     const onCopyCut = type => {
         dispatch(msSetClipboard(type, selection));
@@ -69,6 +75,22 @@ export const PaneToolbar = ({pane}) => {
         // ordinary use, not the exception
     };
 
+    // Worked out here rather than inline: the toolbar has four things it might need to say, and
+    // choosing between them in the markup made the component hard to read
+    let status = '';
+    if (hasSelection) {
+        status = t('multisite-manager:label.selected', {count: selection.length});
+    } else if (hasClipboard && !path) {
+        status = t('multisite-manager:label.chooseDestination', {count: clipboard.nodes.length});
+    } else if (hasClipboard && !isChecking && !typesAllowPaste) {
+        status = t('multisite-manager:label.pasteRefused');
+    } else if (hasClipboard) {
+        status = t('multisite-manager:label.pasteInto', {
+            count: clipboard.nodes.length,
+            folder: path.substring(path.lastIndexOf('/') + 1)
+        });
+    }
+
     return (
         <div className={styles.paneToolbar} data-sel-role={`multisite-toolbar-${pane}`}>
             <Button size="default"
@@ -99,21 +121,13 @@ export const PaneToolbar = ({pane}) => {
                     variant="ghost"
                     icon={<PasteAsReference/>}
                     label={t('multisite-manager:label.pasteReference')}
-                    disabled={!canPaste || !canReference}
+                    disabled={!canPasteReference}
                     title={t('multisite-manager:label.pasteReferenceHint')}
                     data-sel-role="multisite-paste-reference"
                     onClick={onPasteAsReference}
             />
             <div className={styles.toolbarStatus}>
-                <Typography variant="caption">
-                    {hasSelection && t('multisite-manager:label.selected', {count: selection.length})}
-                    {!hasSelection && clipboard.nodes.length > 0 && (path ?
-                        t('multisite-manager:label.pasteInto', {
-                            count: clipboard.nodes.length,
-                            folder: path.substring(path.lastIndexOf('/') + 1)
-                        }) :
-                        t('multisite-manager:label.chooseDestination', {count: clipboard.nodes.length}))}
-                </Typography>
+                <Typography variant="caption">{status}</Typography>
             </div>
         </div>
     );

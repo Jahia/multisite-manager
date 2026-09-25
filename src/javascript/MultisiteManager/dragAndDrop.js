@@ -8,6 +8,8 @@
  * Registering as a proper drag source is both the fix and the way to coexist with jContent.
  */
 
+import {isStructurallyAllowed} from './transferRules';
+
 export const DRAG_TYPE = 'multisite-manager/nodes';
 
 // What a dragged node may be dropped into. Anything else in a listing is a leaf.
@@ -15,26 +17,14 @@ const FOLDER_TYPES = new Set(['jnt:folder', 'jnt:contentFolder', 'jnt:page', 'jn
 
 export const isFolder = node => FOLDER_TYPES.has(node?.primaryNodeType?.name);
 
-const parentOf = path => path.substring(0, path.lastIndexOf('/'));
-
 /**
  * Whether these nodes can be dropped into this folder.
  *
- * Three refusals, all of which would otherwise ask the server to do something incoherent: dropping
- * something onto itself, dropping a folder inside its own subtree, and dropping something back
- * where it already is.
+ * A drag is always a move, so the move rules apply. Node type checking is deliberately not done
+ * here: it would mean a query for every row the pointer crosses. A drop the destination cannot
+ * accept is refused by the server and reported in the pane, which is the same answer a moment later.
  */
-export const canDropInto = (nodes, destination) => {
-    if (!destination || !nodes || nodes.length === 0) {
-        return false;
-    }
-
-    return nodes.every(node =>
-        node.path !== destination &&
-        !destination.startsWith(node.path + '/') &&
-        parentOf(node.path) !== destination
-    );
-};
+export const canDropInto = (nodes, destination) => isStructurallyAllowed(nodes, destination, 'cut');
 
 /** The shape put on the clipboard or into a drag, kept small and serialisable. */
 export const toDraggable = node => ({
