@@ -1,6 +1,7 @@
 import React from 'react';
 import {useTranslation} from 'react-i18next';
-import {LayoutModule} from '@jahia/moonstone';
+import {LayoutModule, Loader, Typography} from '@jahia/moonstone';
+import {useHasAccess} from './useHasAccess';
 import Pane from './Pane';
 import {PANES} from './MultisiteManager.constants';
 import styles from './MultisiteManager.scss';
@@ -15,6 +16,30 @@ import styles from './MultisiteManager.scss';
  */
 export const MultisiteManager = () => {
     const {t} = useTranslation('multisite-manager');
+    const {loading, hasAccess} = useHasAccess();
+
+    if (loading) {
+        return (
+            <LayoutModule
+                title={t('multisite-manager:label.title')}
+                content={<div className={styles.centred}><Loader size="big"/></div>}
+            />
+        );
+    }
+
+    // The route is open to anyone who types it, so the refusal has to live here
+    if (!hasAccess) {
+        return (
+            <LayoutModule
+                title={t('multisite-manager:label.title')}
+                content={
+                    <div className={styles.centred}>
+                        <Typography variant="body">{t('multisite-manager:label.noAccess')}</Typography>
+                    </div>
+                }
+            />
+        );
+    }
 
     return (
         <LayoutModule

@@ -8,6 +8,7 @@
       "empty": "Dieser Ordner ist leer",
       "error": "Dieser Inhalt konnte nicht gelesen werden",
       "name": "Name",
+      "noAccess": "Sie haben in diesem Manager auf keine Site Zugriff.",
       "paste": "Einfügen",
       "pasteInto": "{{count}} bereit — in „{{folder}}“ einfügen",
       "pasteInto_plural": "{{count}} bereit — in „{{folder}}“ einfügen",

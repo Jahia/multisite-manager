@@ -8,6 +8,7 @@
       "empty": "This folder is empty",
       "error": "This content could not be read",
       "name": "Name",
+      "noAccess": "You do not have access to any site in this manager.",
       "paste": "Paste",
       "pasteInto": "{{count}} ready — paste into “{{folder}}”",
       "pasteInto_plural": "{{count}} ready — paste into “{{folder}}”",

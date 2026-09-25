@@ -162,3 +162,13 @@
     z-index: 2;
     top: 0;
 }
+
+.centred {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-medium);
+    color: var(--color-gray_dark);
+    text-align: center;
+}

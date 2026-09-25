@@ -8,6 +8,7 @@
       "empty": "Ce dossier est vide",
       "error": "Ce contenu n’a pas pu être lu",
       "name": "Nom",
+      "noAccess": "Vous n’avez accès à aucun site dans ce gestionnaire.",
       "paste": "Coller",
       "pasteInto": "{{count}} prêt — coller dans « {{folder}} »",
       "pasteInto_plural": "{{count}} prêts — coller dans « {{folder}} »",
