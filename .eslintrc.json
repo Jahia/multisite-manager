@@ -1,0 +1,14 @@
+{
+  "extends": "@jahia/eslint-config",
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module",
+    "ecmaFeatures": {"jsx": true}
+  },
+  "settings": {
+    "react": {"version": "detect"}
+  },
+  "rules": {
+    "import/no-unresolved": "off"
+  }
+}

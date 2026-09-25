@@ -1,0 +1,10 @@
+{
+  "multisite-manager": {
+    "label": {
+      "title": "Gestionnaire multisite",
+      "pages": "Pages",
+      "content": "Dossiers de contenu",
+      "media": "Médias"
+    }
+  }
+}

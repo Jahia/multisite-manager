@@ -1,0 +1,70 @@
+{
+  "name": "@jahia/multisite-manager",
+  "version": "1.0.0-SNAPSHOT",
+  "description": "Browse and transfer content between sites, side by side",
+  "license": "MIT",
+  "main": "index.js",
+  "scripts": {
+    "build": "yarn lint:fix && yarn webpack",
+    "build:nolint": "yarn webpack",
+    "build:production": "yarn build --mode=production",
+    "dev": "yarn webpack --watch",
+    "webpack": "node --max_old_space_size=2048 ./node_modules/webpack/bin/webpack.js",
+    "clean": "rimraf *.log src/main/resources/javascript/apps",
+    "lint": "eslint --ext js,jsx .",
+    "lint:fix": "eslint --ext js,jsx --fix ."
+  },
+  "dx-extends": {
+    "@jahia/jahia-ui-root": "^0.0.1",
+    "@jahia/jcontent": "^3.7.0"
+  },
+  "jahia": {
+    "remotes": {
+      "jahia": "javascript/apps/remoteEntry.js"
+    },
+    "urlPatterns": {
+      "jahia": "/multisite-manager/(?<rest>\\S*)"
+    }
+  },
+  "dependencies": {
+    "@apollo/client": "^3.7.17",
+    "@jahia/data-helper": "^1.1.21",
+    "@jahia/moonstone": "^2.20.3",
+    "@jahia/ui-extender": "^1.3.0",
+    "@jahia/webpack-config": "^1.0.0",
+    "clsx": "^2.1.1",
+    "graphql-tag": "^2.12.6",
+    "i18next": "^20.6.1",
+    "prop-types": "^15.7.2",
+    "react": "^18.3.1",
+    "react-dnd": "^16.0.1",
+    "react-dnd-html5-backend": "^16.0.1",
+    "react-dom": "^18.3.1",
+    "react-i18next": "^11.7.2",
+    "react-redux": "^9.2.0",
+    "react-router": "^5.2.1",
+    "react-router-dom": "^5.1.2",
+    "redux": "^5.0.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.6.2",
+    "@babel/preset-env": "^7.13.12",
+    "@babel/preset-react": "^7.12.13",
+    "@jahia/eslint-config": "^2.1.0",
+    "babel-loader": "^8.1.0",
+    "clean-webpack-plugin": "^4.0.0",
+    "copy-webpack-plugin": "^9.0.1",
+    "css-loader": "^6.7.1",
+    "eslint": "^7.9.0",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jest": "24.7.0",
+    "eslint-plugin-react": "7.32.2",
+    "eslint-plugin-react-hooks": "4.6.0",
+    "rimraf": "^3.0.0",
+    "sass": "^1.51.0",
+    "sass-loader": "^13.0.0",
+    "style-loader": "^3.3.1",
+    "webpack": "^5.105.4",
+    "webpack-cli": "^6.0.1"
+  }
+}
