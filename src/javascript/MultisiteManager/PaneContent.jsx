@@ -1,4 +1,5 @@
 import React, {useEffect, useRef} from 'react';
+import {useVirtualizer} from '@tanstack/react-virtual';
 import PropTypes from 'prop-types';
 import {useDispatch, useSelector} from 'react-redux';
 import {useTranslation} from 'react-i18next';
@@ -28,6 +29,11 @@ const VIEW_TYPE_CONTENT = 'content';
 // gone before it becomes part of how the row looks
 const HIGHLIGHT_MS = 5000;
 
+// Moonstone fixes a table row at 48px, so the height is known rather than measured
+const ROW_HEIGHT = 48;
+// Enough rows beyond the viewport that a flick of the wheel does not show a gap
+const OVERSCAN = 12;
+
 const Placeholder = ({children}) => (
     <div className={styles.contentPlaceholder}>
         <Typography variant="body">{children}</Typography>
@@ -55,6 +61,7 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
     const {register, accepts} = useDropCheck();
     // Survives a re-query, which is what lets the tree stay on screen while a branch opens
     const lastRows = useRef([]);
+    const scrollRef = useRef(null);
 
     // A drag is always a move: the gesture says "put it there", not "leave a copy behind"
     const onDropInto = async (item, destination) => {
@@ -138,6 +145,32 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
     const onKeyDown = useKeyboard({pane, rows, focusIndex, openPaths, selection, onCopy: copy, onCut: cut, onPaste: paste});
     const focused = Math.min(Math.max(focusIndex, 0), rows.length - 1);
 
+    // Only the rows on screen are built. A site with a large media folder produces thousands once
+    // a few branches are open, and every one of them was a row with its own drag source, drop
+    // target and status component.
+    const virtualizer = useVirtualizer({
+        count: rows.length,
+        estimateSize: () => ROW_HEIGHT,
+        getScrollElement: () => scrollRef.current,
+        overscan: OVERSCAN
+    });
+
+    const visible = virtualizer.getVirtualItems();
+    // Spacers rather than absolute positioning: the rows are flex, and a table that keeps its own
+    // layout is easier to trust than one propped up by transforms
+    const padTop = visible.length > 0 ? visible[0].start : 0;
+    const padBottom = visible.length > 0 ? virtualizer.getTotalSize() - visible[visible.length - 1].end : 0;
+
+    // Arrowing off the bottom has to bring the row into view, or the focus outline is somewhere
+    // nobody can see
+    useEffect(() => {
+        if (rows.length > 0) {
+            virtualizer.scrollToIndex(focused, {align: 'auto'});
+        }
+        // Deliberately keyed on the focused row alone: scrolling on every render would fight the reader
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [focused]);
+
     if (error) {
         console.error('Could not read the contents of ' + rootPath, error);
         return <Placeholder>{t('multisite-manager:label.error')}</Placeholder>;
@@ -183,7 +216,10 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
     };
 
     return (
-        <div ref={dropOnPane}
+        <div ref={element => {
+                 scrollRef.current = element;
+                 dropOnPane(element);
+             }}
              // Focusable so it can receive keys, and given a role that says what it is
              role="grid"
              tabIndex={0}
@@ -230,29 +266,34 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {rows.map((row, index) => (
-                        <ContentRow key={row.node.uuid || row.node.path}
-                                    node={row.node}
-                                    pane={pane}
-                                    depth={row.depth}
-                                    hasChildren={row.hasChildren}
-                                    isOpen={openSet.has(row.node.path)}
-                                    selection={selection}
-                                    isSelected={selectedPaths.has(row.node.path)}
-                                    isPasted={highlightedPaths.has(row.node.path)}
-                                    isCurrent={row.node.path === path}
-                                    isFocused={index === focused}
-                                    accepts={accepts}
-                                    language={language}
-                                    uilang={uilang}
-                                    onToggle={toggle}
-                                    onDropInto={onDropInto}
-                                    onSetCurrent={nodePath => dispatch(msSetPath(pane, nodePath))}
-                                    onSetOpen={(nodePath, open) => dispatch(open ?
-                                        msOpenPaths(pane, [nodePath]) :
-                                        msClosePaths(pane, [nodePath]))}
-                        />
-                    ))}
+                    {padTop > 0 && <TableRow style={{height: padTop}}/>}
+                    {visible.map(({index}) => {
+                        const row = rows[index];
+                        return (
+                            <ContentRow key={row.node.uuid || row.node.path}
+                                        node={row.node}
+                                        pane={pane}
+                                        depth={row.depth}
+                                        hasChildren={row.hasChildren}
+                                        isOpen={openSet.has(row.node.path)}
+                                        selection={selection}
+                                        isSelected={selectedPaths.has(row.node.path)}
+                                        isPasted={highlightedPaths.has(row.node.path)}
+                                        isCurrent={row.node.path === path}
+                                        isFocused={index === focused}
+                                        accepts={accepts}
+                                        language={language}
+                                        uilang={uilang}
+                                        onToggle={toggle}
+                                        onDropInto={onDropInto}
+                                        onSetCurrent={nodePath => dispatch(msSetPath(pane, nodePath))}
+                                        onSetOpen={(nodePath, open) => dispatch(open ?
+                                            msOpenPaths(pane, [nodePath]) :
+                                            msClosePaths(pane, [nodePath]))}
+                            />
+                        );
+                    })}
+                    {padBottom > 0 && <TableRow style={{height: padBottom}}/>}
                 </TableBody>
             </Table>
         </div>
