@@ -4,7 +4,7 @@ import clsx from 'clsx';
 import {useTranslation} from 'react-i18next';
 import {useDrag, useDrop} from 'react-dnd';
 import {Button, ChevronDown, ChevronRight, Checkbox, TableBodyCell, TableRow} from '@jahia/moonstone';
-import {NodeIcon} from '@jahia/jcontent';
+import {ContentStatuses, NodeIcon} from '@jahia/jcontent';
 import {canDropInto, DRAG_TYPE, isFolder, toDraggable} from './dragAndDrop';
 import {useDropCheck} from './DropCheck.context';
 import {isImage} from './fileUtils';
@@ -22,7 +22,7 @@ const INDENT_PX = 24;
  */
 export const ContentRow = ({
     node, pane, depth, hasChildren, isOpen, isSelected, isPasted, isCurrent, selection, accepts,
-    onToggle, onDropInto, onSetOpen, onSetCurrent
+    language, uilang, onToggle, onDropInto, onSetOpen, onSetCurrent
 }) => {
     const canHold = isFolder(node) || node.primaryNodeType?.name === 'jnt:virtualsite';
     // Present only on reference nodes; everything else comes back without the property
@@ -121,6 +121,20 @@ export const ContentRow = ({
                     )}
                 </span>
             </TableBodyCell>
+            <TableBodyCell className={styles.statusCell}>
+                {/*
+                  * jContent's own component, given only the statuses that bear on a transfer: what
+                  * is published where, and what is locked or on its way out. The data was already
+                  * on every row - aggregatedPublicationInfo comes with jContent's node fields - so
+                  * this costs nothing to ask for.
+                  */}
+                <ContentStatuses node={node}
+                                 language={language}
+                                 uilang={uilang}
+                                 hasLabel={false}
+                                 renderedStatuses={['published', 'modified', 'notPublished', 'locked', 'markedForDeletion']}
+                />
+            </TableBodyCell>
             <TableBodyCell>{node.primaryNodeType?.displayName}</TableBodyCell>
             {previewable && <ThumbnailPreview node={node} at={previewAt}/>}
         </TableRow>
@@ -135,6 +149,8 @@ ContentRow.propTypes = {
     isOpen: PropTypes.bool,
     isSelected: PropTypes.bool,
     accepts: PropTypes.func,
+    language: PropTypes.string,
+    uilang: PropTypes.string,
     isPasted: PropTypes.bool,
     isCurrent: PropTypes.bool,
     selection: PropTypes.array,

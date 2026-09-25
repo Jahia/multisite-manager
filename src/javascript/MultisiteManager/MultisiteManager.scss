@@ -213,3 +213,9 @@
     letter-spacing: 0.04em;
     white-space: nowrap;
 }
+
+/* Narrow: these are marks to scan, not text to read */
+.statusCell {
+    flex: 0 0 auto;
+    width: 96px;
+}

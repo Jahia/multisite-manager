@@ -205,6 +205,7 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
                             <Checkbox checked={allSelected} onChange={toggleAll}/>
                         </TableHeadCell>
                         <TableHeadCell className={styles.nameCell}>{t('multisite-manager:label.name')}</TableHeadCell>
+                        <TableHeadCell className={styles.statusCell}>{t('multisite-manager:label.status')}</TableHeadCell>
                         <TableHeadCell>{t('multisite-manager:label.type')}</TableHeadCell>
                     </TableRow>
                 </TableHead>
@@ -221,6 +222,8 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
                                     isPasted={highlightedPaths.has(row.node.path)}
                                     isCurrent={row.node.path === path}
                                     accepts={accepts}
+                                    language={language}
+                                    uilang={uilang}
                                     onToggle={toggle}
                                     onDropInto={onDropInto}
                                     onSetCurrent={nodePath => dispatch(msSetPath(pane, nodePath))}

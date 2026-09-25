@@ -25,6 +25,7 @@
       "selectSite": "Wählen Sie eine Site, um ihren Inhalt zu sehen",
       "selected": "{{count}} ausgewählt",
       "selected_plural": "{{count}} ausgewählt",
+      "status": "Status",
       "title": "Multisite-Manager",
       "transferFailed": "{{count}} Element konnte nicht verschoben werden",
       "transferFailedHint": "„{{name}}“ kann hier nicht abgelegt werden. Wählen Sie einen Ordner, der diese Art von Inhalt aufnimmt.",

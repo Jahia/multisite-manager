@@ -25,6 +25,7 @@
       "selectSite": "Choose a site to see what it holds",
       "selected": "{{count}} selected",
       "selected_plural": "{{count}} selected",
+      "status": "Status",
       "title": "Multisite manager",
       "transferFailed": "{{count}} item could not be moved",
       "transferFailedHint": "“{{name}}” cannot be placed here. Choose a folder that accepts this kind of content.",
