@@ -36,7 +36,7 @@ Placeholder.propTypes = {children: PropTypes.node};
  * Structured mode means the query only descends into branches that are open, so opening a site
  * with a great many pages costs nothing until those branches are asked for.
  */
-const Tree = ({pane, site, mode}) => {
+const Tree = ({pane, site, mode, reloadCount}) => {
     const {t} = useTranslation('multisite-manager');
     const dispatch = useDispatch();
     const {language, uilang} = useSelector(state => ({language: state.language, uilang: state.uilang}));
@@ -61,7 +61,7 @@ const Tree = ({pane, site, mode}) => {
         });
     };
 
-    const {result, loading, error} = useLayoutQuery({
+    const {result, loading, error, refetch} = useLayoutQuery({
         mode,
         siteKey: site,
         path: rootPath,
@@ -75,6 +75,18 @@ const Tree = ({pane, site, mode}) => {
         searchPath: '',
         searchTerms: ''
     });
+
+    // Remounting the tree is not enough to see a transfer: useLayoutQuery passes no fetchPolicy to
+    // the tree query, so Apollo answers cache-first and hands back the state before the move. Only
+    // refetch actually goes to the server, which is why this reacts to the counter rather than
+    // being keyed on it.
+    const lastReload = useRef(reloadCount);
+    useEffect(() => {
+        if (lastReload.current !== reloadCount) {
+            lastReload.current = reloadCount;
+            refetch();
+        }
+    }, [reloadCount, refetch]);
 
     // Dropping on empty space below the tree puts things at the top of the site, so there is
     // always a target even when every visible row is a leaf
@@ -192,7 +204,8 @@ const Tree = ({pane, site, mode}) => {
 Tree.propTypes = {
     pane: PropTypes.string.isRequired,
     site: PropTypes.string.isRequired,
-    mode: PropTypes.string.isRequired
+    mode: PropTypes.string.isRequired,
+    reloadCount: PropTypes.number
 };
 
 export const PaneContent = ({pane}) => {
@@ -216,9 +229,9 @@ export const PaneContent = ({pane}) => {
         return <Placeholder>{t('multisite-manager:label.selectSite')}</Placeholder>;
     }
 
-    // Using reloadCount as the key remounts the tree after a transfer, the simplest way to make it
-    // query again - jContent's refetch registry is not part of its exposed API.
-    return <Tree key={reloadCount} pane={pane} site={site} mode={mode}/>;
+    // Passed as a prop, not a key: the tree has to stay mounted so it can refetch rather than be
+    // rebuilt from a cache that still holds the state before the transfer.
+    return <Tree pane={pane} site={site} mode={mode} reloadCount={reloadCount}/>;
 };
 
 PaneContent.propTypes = {
