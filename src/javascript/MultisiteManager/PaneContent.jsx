@@ -19,50 +19,42 @@ import styles from './MultisiteManager.scss';
 // JContent's own values, which its query handlers compare against - not exported, so repeated
 const VIEW_MODE_FLAT = 'flatList';
 const VIEW_TYPE_CONTENT = 'content';
+const PAGE_SIZE = 50;
+
+const Placeholder = ({children}) => (
+    <div className={styles.contentPlaceholder}>
+        <Typography variant="body">{children}</Typography>
+    </div>
+);
+
+Placeholder.propTypes = {children: PropTypes.node};
 
 /**
- * What the selected folder holds, for one pane.
+ * The listing itself, mounted only once the pane has a folder to show.
  *
- * A flat list of the folder's own children rather than jContent's structured tree: the tree is
- * already on the left of this pane, and repeating it here would waste half the width that the
- * second site needs. This is the "what is in here" half of browsing.
- *
- * The query is jContent's - useLayoutQuery resolves the accordion by `mode`, which is this pane's
- * accordion key, so the query handler, type filters and sorting all come from the definition the
- * tree is already using.
+ * Kept as its own component on purpose: useLayoutQuery resolves the accordion with
+ * `registry.get('accordionItem', mode)` and then reads `.tableConfig` off it without guarding, so
+ * calling it with no mode - which is the state of a pane nobody has clicked in yet - throws. A hook
+ * cannot be skipped, but a component can go unmounted.
  */
-export const PaneContent = ({pane}) => {
+const ContentListing = ({pane, site, mode, path}) => {
     const {t} = useTranslation('multisite-manager');
-    const {site, mode, path} = useSelector(state => state[REDUX_KEY][pane]);
     const {language, uilang} = useSelector(state => ({language: state.language, uilang: state.uilang}));
 
-    const isReady = Boolean(site && mode && path);
-    const options = {
+    const {result, loading, error} = useLayoutQuery({
         mode,
         siteKey: site,
         path,
         lang: language,
         uilang,
-        pagination: {currentPage: 0, pageSize: 50},
+        pagination: {currentPage: 0, pageSize: PAGE_SIZE},
         sort: {orderBy: 'displayName', order: 'ASC'},
         openPaths: [],
         hideRoot: true,
         tableView: {viewMode: VIEW_MODE_FLAT, viewType: VIEW_TYPE_CONTENT},
         searchPath: '',
         searchTerms: ''
-    };
-
-    // Hooks cannot be skipped, so the query always runs; when the pane has nothing selected it is
-    // pointed at the site root, and the result is discarded below.
-    const {result, loading, error} = useLayoutQuery(isReady ? options : {...options, mode, path: `/sites/${site || 'systemsite'}`});
-
-    if (!isReady) {
-        return (
-            <div className={styles.contentPlaceholder}>
-                <Typography variant="body">{t('multisite-manager:label.selectFolder')}</Typography>
-            </div>
-        );
-    }
+    });
 
     if (loading) {
         return <div className={styles.contentPlaceholder}><Loader size="big"/></div>;
@@ -70,21 +62,13 @@ export const PaneContent = ({pane}) => {
 
     if (error) {
         console.error('Could not read the contents of ' + path, error);
-        return (
-            <div className={styles.contentPlaceholder}>
-                <Typography variant="body">{t('multisite-manager:label.error')}</Typography>
-            </div>
-        );
+        return <Placeholder>{t('multisite-manager:label.error')}</Placeholder>;
     }
 
     const nodes = result?.nodes || [];
 
     if (nodes.length === 0) {
-        return (
-            <div className={styles.contentPlaceholder}>
-                <Typography variant="body">{t('multisite-manager:label.empty')}</Typography>
-            </div>
-        );
+        return <Placeholder>{t('multisite-manager:label.empty')}</Placeholder>;
     }
 
     return (
@@ -109,6 +93,31 @@ export const PaneContent = ({pane}) => {
             </Table>
         </div>
     );
+};
+
+ContentListing.propTypes = {
+    pane: PropTypes.string.isRequired,
+    site: PropTypes.string.isRequired,
+    mode: PropTypes.string.isRequired,
+    path: PropTypes.string.isRequired
+};
+
+/**
+ * What the selected folder holds, for one pane.
+ *
+ * A flat list of the folder's own children rather than jContent's structured tree: the tree is
+ * already on the left of this pane, and repeating it here would waste half the width that the
+ * second site needs.
+ */
+export const PaneContent = ({pane}) => {
+    const {t} = useTranslation('multisite-manager');
+    const {site, mode, path} = useSelector(state => state[REDUX_KEY][pane]);
+
+    if (!site || !mode || !path) {
+        return <Placeholder>{t('multisite-manager:label.selectFolder')}</Placeholder>;
+    }
+
+    return <ContentListing pane={pane} site={site} mode={mode} path={path}/>;
 };
 
 PaneContent.propTypes = {
