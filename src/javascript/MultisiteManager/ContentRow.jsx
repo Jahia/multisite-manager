@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
+import {useTranslation} from 'react-i18next';
 import {useDrag, useDrop} from 'react-dnd';
 import {Button, ChevronDown, ChevronRight, Checkbox, TableBodyCell, TableRow} from '@jahia/moonstone';
 import {NodeIcon} from '@jahia/jcontent';
@@ -23,9 +24,13 @@ export const ContentRow = ({
     onToggle, onDropInto, onSetOpen, onSetCurrent
 }) => {
     const canHold = isFolder(node) || node.primaryNodeType?.name === 'jnt:virtualsite';
+    // Present only on reference nodes; everything else comes back without the property
+    const referenced = node.referenced?.refNode;
     const previewable = isImage(node);
     // Where the pointer is, while it is over an image row; null the rest of the time
     const [previewAt, setPreviewAt] = useState(null);
+
+    const {t} = useTranslation('multisite-manager');
 
     const [{isDragging}, drag] = useDrag({
         type: DRAG_TYPE,
@@ -89,6 +94,14 @@ export const ContentRow = ({
                     </span>
                     <NodeIcon node={node}/>
                     {node.displayName || node.name}
+                    {referenced && (
+                        // Where the referenced thing actually lives. The name a reference carries
+                        // says nothing about that, and in a tool about content from elsewhere it is
+                        // the fact worth having.
+                        <span className={styles.referenceSource} title={referenced.path}>
+                            ({referenced.site?.displayName || referenced.site?.sitekey || t('multisite-manager:label.unknownSite')})
+                        </span>
+                    )}
                 </span>
             </TableBodyCell>
             <TableBodyCell>{node.primaryNodeType?.displayName}</TableBodyCell>

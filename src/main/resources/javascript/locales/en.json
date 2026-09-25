@@ -28,7 +28,8 @@
       "undoCreate": "Delete the copy of “{{name}}” that was just pasted",
       "undoCreate_plural": "Delete the {{count}} items that were just pasted",
       "undoMove": "Move “{{name}}” back where it came from",
-      "undoMove_plural": "Move {{count}} items back where they came from"
+      "undoMove_plural": "Move {{count}} items back where they came from",
+      "unknownSite": "unknown site"
     }
   }
 }

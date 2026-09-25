@@ -28,7 +28,8 @@
       "undoCreate": "Die soeben eingefügte Kopie von „{{name}}“ löschen",
       "undoCreate_plural": "Die {{count}} soeben eingefügten Elemente löschen",
       "undoMove": "„{{name}}“ an den ursprünglichen Ort zurücklegen",
-      "undoMove_plural": "{{count}} Elemente an ihren ursprünglichen Ort zurücklegen"
+      "undoMove_plural": "{{count}} Elemente an ihren ursprünglichen Ort zurücklegen",
+      "unknownSite": "unbekannte Site"
     }
   }
 }

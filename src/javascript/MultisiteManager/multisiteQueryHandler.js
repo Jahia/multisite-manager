@@ -1,3 +1,4 @@
+import gql from 'graphql-tag';
 import {BaseDescendantsQuery, BaseQueryHandler, BaseTreeQueryHandler} from '@jahia/jcontent';
 
 /**
@@ -26,6 +27,35 @@ const TYPE_FILTER = [
 ];
 
 const SORT_BY_NAME_ASC = {fieldName: 'displayName', sortType: 'ASC'};
+
+/**
+ * What a reference points at, carried on every row.
+ *
+ * A reference node shows the name it was given, which says nothing about where the thing it refers
+ * to actually lives - and in a tool whose whole subject is content coming from elsewhere, that is
+ * the one fact worth having. j:node is the weak reference every reference type carries, and refNode
+ * follows it.
+ *
+ * Fetched with the tree rather than looked up per row: it is two extra fields on a query that is
+ * already being made, and rows with no such property simply come back null.
+ */
+export const ReferenceFields = {
+    gql: gql`
+        fragment MultisiteReferenceFields on JCRNode {
+            referenced: property(name: "j:node") {
+                refNode {
+                    path
+                    displayName(language: $language)
+                    site {
+                        sitekey
+                        displayName(language: $displayLanguage)
+                    }
+                }
+            }
+        }
+    `,
+    applyFor: 'node'
+};
 
 export const MultisiteTreeQueryHandler = {
     ...BaseQueryHandler,

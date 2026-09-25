@@ -7,6 +7,7 @@ import clsx from 'clsx';
 import {Banner, Checkbox, Loader, Table, TableBody, TableHead, TableHeadCell, TableRow, Typography} from '@jahia/moonstone';
 import {useLayoutQuery} from '@jahia/jcontent';
 import {msClosePaths, msHighlight, msOpenPaths, msSetPath, msSetSelection} from './MultisiteManager.redux';
+import {ReferenceFields} from './multisiteQueryHandler';
 import {useTransfer} from './useTransfer';
 import {REDUX_KEY} from './MultisiteManager.constants';
 import {canDropInto, DRAG_TYPE, toDraggable} from './dragAndDrop';
@@ -74,7 +75,7 @@ const Tree = ({pane, site, mode, reloadCount}) => {
         tableView: {viewMode: VIEW_MODE_STRUCTURED, viewType: VIEW_TYPE_CONTENT},
         searchPath: '',
         searchTerms: ''
-    });
+    }, [ReferenceFields]);
 
     // Remounting the tree is not enough to see a transfer: useLayoutQuery passes no fetchPolicy to
     // the tree query, so Apollo answers cache-first and hands back the state before the move. Only

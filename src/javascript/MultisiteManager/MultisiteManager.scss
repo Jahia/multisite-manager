@@ -172,3 +172,10 @@
     color: var(--color-gray_dark);
     text-align: center;
 }
+
+/* Quieter than the name it follows: it is context, not identity */
+.referenceSource {
+    color: var(--color-gray_dark);
+    font-style: italic;
+    white-space: nowrap;
+}

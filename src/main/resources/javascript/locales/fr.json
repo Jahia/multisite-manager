@@ -28,7 +28,8 @@
       "undoCreate": "Supprimer la copie de « {{name}} » qui vient d’être collée",
       "undoCreate_plural": "Supprimer les {{count}} éléments qui viennent d’être collés",
       "undoMove": "Remettre « {{name}} » à sa place d’origine",
-      "undoMove_plural": "Remettre {{count}} éléments à leur place d’origine"
+      "undoMove_plural": "Remettre {{count}} éléments à leur place d’origine",
+      "unknownSite": "site inconnu"
     }
   }
 }
