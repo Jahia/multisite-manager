@@ -16,6 +16,8 @@ independent panes, each a site of its own.
 - Drag rows between panes to move them
 - One level of undo: a move goes back, a copy or a reference is removed
 - Pasted rows tinted green briefly, so the result of an action is visible
+- References show the site they point at, with the full path as a tooltip
+- A folder that will not accept what is being dragged says so while you are still holding it
 - Thumbnail preview on hovering an image
 - Per-pane refresh, and a banner when a transfer is refused
 
@@ -60,8 +62,10 @@ accepts none of them, and a page cannot be referenced at all.
 - **No automated tests yet.** The rules worth protecting are only observable end to end; Cypress is
   the right fit and the reference and paste rules should be the first specs.
 - No virtualisation — 200 rows per branch.
-- Dragging does not check node types on hover; a drop the destination cannot accept is refused by
-  the server and reported in the pane.
+- The drag-time compatibility check matches on primary node type only, while a node can also
+  satisfy a constraint through a supertype or a mixin. It therefore errs towards refusing, and the
+  server remains the authority - anything that slips through is refused there and reported in the
+  pane.
 - The clipboard is the module's own, so copying in jContent does not paste here.
 - If both panes show the same site, only the source and destination refresh after a transfer.
 - References deliberately keep pointing at the source site. A copied item that refers to a category
