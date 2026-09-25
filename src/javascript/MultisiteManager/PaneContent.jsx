@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {useDispatch, useSelector} from 'react-redux';
 import {useTranslation} from 'react-i18next';
@@ -8,16 +8,17 @@ import {
     Loader,
     Table,
     TableBody,
-    TableBodyCell,
     TableHead,
     TableHeadCell,
     TableRow,
     Typography
 } from '@jahia/moonstone';
-import {NodeIcon, useLayoutQuery} from '@jahia/jcontent';
+import {useLayoutQuery} from '@jahia/jcontent';
 import {msHighlight, msSetSelection} from './MultisiteManager.redux';
 import {REDUX_KEY} from './MultisiteManager.constants';
-import {canDropInto, isFolder, readPayload, writePayload} from './dragAndDrop';
+import {useDrop} from 'react-dnd';
+import {canDropInto, DRAG_TYPE, toDraggable} from './dragAndDrop';
+import ContentRow from './ContentRow';
 import {useTransfer} from './useTransfer';
 import styles from './MultisiteManager.scss';
 
@@ -53,8 +54,25 @@ const ContentListing = ({pane, site, mode, path}) => {
     const selection = useSelector(state => state[REDUX_KEY][pane].selection);
     const highlighted = useSelector(state => state[REDUX_KEY][pane].highlighted);
     const {transfer} = useTransfer();
-    // Path of the folder currently under the pointer, or the pane itself for a drop anywhere else
-    const [dropTarget, setDropTarget] = useState(null);
+
+    // Dropping anywhere in the pane that is not a folder row puts things in the folder it is
+    // showing, so there is always somewhere to aim at even in a listing of leaves
+    const [{isOverPane, canDropOnPane}, dropOnPane] = useDrop({
+        accept: DRAG_TYPE,
+        canDrop: item => canDropInto(item.nodes, path),
+        drop: (item, monitor) => {
+            // A folder row under the pointer has already handled it
+            if (monitor.didDrop()) {
+                return;
+            }
+
+            onDropInto(item, path);
+        },
+        collect: monitor => ({
+            isOverPane: monitor.isOver({shallow: true}),
+            canDropOnPane: monitor.canDrop()
+        })
+    });
 
     const {result, loading, error} = useLayoutQuery({
         mode,
@@ -93,60 +111,32 @@ const ContentListing = ({pane, site, mode, path}) => {
     const toggle = node => {
         const next = selectedPaths.has(node.path) ?
             selection.filter(selected => selected.path !== node.path) :
-            [...selection, {path: node.path, uuid: node.uuid, name: node.name, displayName: node.displayName}];
+            [...selection, toDraggable(node)];
         dispatch(msSetSelection(pane, next));
     };
 
     const toggleAll = () => {
-        dispatch(msSetSelection(pane, allSelected ? [] : nodes.map(node => ({
-            path: node.path, uuid: node.uuid, name: node.name, displayName: node.displayName
-        }))));
+        dispatch(msSetSelection(pane, allSelected ? [] : nodes.map(toDraggable)));
     };
 
-    // Dragging a row that is part of the selection takes the whole selection; dragging any other
-    // row takes just that one, without disturbing what was selected.
-    const onDragStart = (event, node) => {
-        const dragged = selectedPaths.has(node.path) ? selection : [{
-            path: node.path, uuid: node.uuid, name: node.name, displayName: node.displayName
-        }];
-        writePayload(event, {fromPane: pane, nodes: dragged});
-    };
-
-    const onDrop = async (event, destination) => {
-        event.preventDefault();
-        event.stopPropagation();
-        setDropTarget(null);
-
-        const payload = readPayload(event);
-        if (!payload || !canDropInto(payload.nodes, destination)) {
+    // A drag is always a move: the gesture says "put it there", not "leave a copy behind"
+    const onDropInto = async (item, destination) => {
+        if (!canDropInto(item.nodes, destination)) {
             return;
         }
 
-        // A drag is always a move: the gesture says "put it there", not "leave a copy behind"
         await transfer({
-            clipboard: {type: 'cut', nodes: payload.nodes},
+            clipboard: {type: 'cut', nodes: item.nodes},
             toPane: pane,
-            fromPane: payload.fromPane,
+            fromPane: item.fromPane,
             destination
         });
     };
 
-    const onDragOver = (event, destination) => {
-        // Calling preventDefault is what marks this as a drop target; the browser refuses otherwise
-        event.preventDefault();
-        event.stopPropagation();
-        event.dataTransfer.dropEffect = 'move';
-        if (dropTarget !== destination) {
-            setDropTarget(destination);
-        }
-    };
-
     return (
-        <div className={clsx(styles.contentList, dropTarget === path && styles.dropInto)}
+        <div ref={dropOnPane}
+             className={clsx(styles.contentList, isOverPane && canDropOnPane && styles.dropInto)}
              data-sel-role={`multisite-content-${pane}`}
-             onDragOver={event => onDragOver(event, path)}
-             onDragLeave={() => setDropTarget(null)}
-             onDrop={event => onDrop(event, path)}
         >
             <Table>
                 <TableHead>
@@ -160,28 +150,15 @@ const ContentListing = ({pane, site, mode, path}) => {
                 </TableHead>
                 <TableBody>
                     {nodes.map(node => (
-                        <TableRow key={node.uuid || node.path}
-                                  draggable
-                                  className={clsx(
-                                      highlightedPaths.has(node.path) && styles.pastedRow,
-                                      dropTarget === node.path && styles.dropInto
-                                  )}
-                                  isHighlighted={selectedPaths.has(node.path)}
-                                  onClick={() => toggle(node)}
-                                  onDragStart={event => onDragStart(event, node)}
-                                  onDragOver={isFolder(node) ? (event => onDragOver(event, node.path)) : undefined}
-                                  onDragLeave={isFolder(node) ? (() => setDropTarget(null)) : undefined}
-                                  onDrop={isFolder(node) ? (event => onDrop(event, node.path)) : undefined}
-                        >
-                            <TableBodyCell className={styles.checkboxCell}>
-                                <Checkbox checked={selectedPaths.has(node.path)}
-                                          onChange={() => toggle(node)}/>
-                            </TableBodyCell>
-                            <TableBodyCell iconStart={<NodeIcon node={node}/>}>
-                                {node.displayName || node.name}
-                            </TableBodyCell>
-                            <TableBodyCell>{node.primaryNodeType?.displayName}</TableBodyCell>
-                        </TableRow>
+                        <ContentRow key={node.uuid || node.path}
+                                    node={node}
+                                    pane={pane}
+                                    selection={selection}
+                                    isSelected={selectedPaths.has(node.path)}
+                                    isPasted={highlightedPaths.has(node.path)}
+                                    onToggle={toggle}
+                                    onDropInto={onDropInto}
+                        />
                     ))}
                 </TableBody>
             </Table>

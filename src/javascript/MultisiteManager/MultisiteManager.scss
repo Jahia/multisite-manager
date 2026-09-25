@@ -87,3 +87,8 @@
     outline-offset: -2px;
     background-color: var(--color-accent_light60);
 }
+
+/* The row being carried, faded so the eye follows the cursor rather than the original */
+.dragging {
+    opacity: 0.4;
+}

@@ -1,32 +1,19 @@
 /**
- * Dragging rows between the panes, using the browser's own drag and drop.
+ * Dragging rows between the panes.
  *
- * Not react-dnd, even though jContent mounts a provider this module sits inside: Moonstone's
- * TableRow does not forward a ref, and react-dnd needs one to attach a connector. TableRow does
- * pass through ordinary <tr> props, which is all the native API asks for.
+ * Through react-dnd rather than the browser's own drag and drop, because jContent mounts an
+ * HTML5Backend around the whole application and that backend cancels any drag it does not
+ * recognise: its window-level dragstart handler ends with "if by this time no drag source reacted,
+ * tell browser not to drag" and calls preventDefault. A plain `draggable` row is silently refused.
+ * Registering as a proper drag source is both the fix and the way to coexist with jContent.
  */
 
-export const DRAG_MIME = 'application/x-jahia-multisite-nodes';
+export const DRAG_TYPE = 'multisite-manager/nodes';
 
 // What a dragged node may be dropped into. Anything else in a listing is a leaf.
 const FOLDER_TYPES = new Set(['jnt:folder', 'jnt:contentFolder', 'jnt:page', 'jnt:contentList']);
 
 export const isFolder = node => FOLDER_TYPES.has(node?.primaryNodeType?.name);
-
-export const readPayload = event => {
-    try {
-        const raw = event.dataTransfer.getData(DRAG_MIME);
-        return raw ? JSON.parse(raw) : null;
-    } catch (e) {
-        console.warn('Could not read the dragged selection', e);
-        return null;
-    }
-};
-
-export const writePayload = (event, payload) => {
-    event.dataTransfer.setData(DRAG_MIME, JSON.stringify(payload));
-    event.dataTransfer.effectAllowed = 'move';
-};
 
 const parentOf = path => path.substring(0, path.lastIndexOf('/'));
 
@@ -48,3 +35,11 @@ export const canDropInto = (nodes, destination) => {
         parentOf(node.path) !== destination
     );
 };
+
+/** The shape put on the clipboard or into a drag, kept small and serialisable. */
+export const toDraggable = node => ({
+    path: node.path,
+    uuid: node.uuid,
+    name: node.name,
+    displayName: node.displayName
+});
