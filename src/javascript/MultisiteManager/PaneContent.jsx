@@ -5,11 +5,12 @@ import {useDispatch, useSelector} from 'react-redux';
 import {useTranslation} from 'react-i18next';
 import {useDrop} from 'react-dnd';
 import clsx from 'clsx';
-import {Banner, Checkbox, Loader, Table, TableBody, TableHead, TableHeadCell, TableRow, Typography} from '@jahia/moonstone';
+import {Banner, Button, Checkbox, Loader, Table, TableBody, TableHead, TableHeadCell, TableRow, Typography} from '@jahia/moonstone';
 import {useLayoutQuery} from '@jahia/jcontent';
 import {msClosePaths, msHighlight, msOpenPaths, msSetPath, msSetSelection} from './MultisiteManager.redux';
 import {ReferenceFields} from './multisiteQueryHandler';
 import {useTransfer} from './useTransfer';
+import {requestCancel} from './transferControl';
 import {REDUX_KEY} from './MultisiteManager.constants';
 import {canDropInto, DRAG_TYPE, toDraggable} from './dragAndDrop';
 import {flattenTree} from './treeRows';
@@ -52,7 +53,7 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
     const {t} = useTranslation('multisite-manager');
     const dispatch = useDispatch();
     const {language, uilang} = useSelector(state => ({language: state.language, uilang: state.uilang}));
-    const {selection, openPaths, highlighted, path, failure, renamed, focusIndex} =
+    const {selection, openPaths, highlighted, path, failure, renamed, progress, focusIndex} =
         useSelector(state => state[REDUX_KEY][pane]);
     const {copy, cut, paste} = usePaneClipboard(pane);
 
@@ -238,6 +239,20 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
                         data-sel-role="multisite-failure"
                 >
                     {t('multisite-manager:label.transferFailedHint', {name: failure.name})}
+                </Banner>
+            )}
+            {progress && (
+                <Banner variant="info"
+                        className={styles.failureBanner}
+                        title={t('multisite-manager:label.transferring', {done: progress.done, total: progress.total})}
+                        data-sel-role="multisite-progress"
+                >
+                    <Button size="small"
+                            variant="ghost"
+                            label={t('multisite-manager:label.cancelTransfer')}
+                            data-sel-role="multisite-cancel"
+                            onClick={requestCancel}
+                    />
                 </Banner>
             )}
             {renamed.length > 0 && (

@@ -29,7 +29,9 @@ const emptyPane = {
     // Why the last transfer into this pane failed, if it did. Shown until the next one is tried.
     failure: null,
     // Things the server renamed on arrival because the name was taken. Silent until told.
-    renamed: []
+    renamed: [],
+    // How far a transfer into this pane has got, or null when none is running
+    progress: null
 };
 
 export const MS_SET_SITE = 'MULTISITE_SET_SITE';
@@ -46,6 +48,7 @@ export const MS_UNDO = 'MULTISITE_UNDO';
 export const MS_SEARCH = 'MULTISITE_SEARCH';
 export const MS_FOCUS = 'MULTISITE_FOCUS';
 export const MS_RENAMED = 'MULTISITE_RENAMED';
+export const MS_PROGRESS = 'MULTISITE_PROGRESS';
 
 export const msSetSite = (pane, site) => ({type: MS_SET_SITE, pane, site});
 export const msSetPath = (pane, path) => ({type: MS_SET_PATH, pane, path});
@@ -59,6 +62,7 @@ export const msSearch = (pane, searchTerms) => ({type: MS_SEARCH, pane, searchTe
 export const msFocus = (pane, focusIndex) => ({type: MS_FOCUS, pane, focusIndex});
 export const msFailure = (pane, failure) => ({type: MS_FAILURE, pane, failure});
 export const msRenamed = (pane, renamed) => ({type: MS_RENAMED, pane, renamed});
+export const msProgress = (pane, progress) => ({type: MS_PROGRESS, pane, progress});
 
 /** The type is 'copy' or 'cut'; an empty nodes list means the clipboard is empty. */
 export const msSetClipboard = (type, nodes) => ({type: MS_CLIPBOARD, clipboard: {type, nodes}});
@@ -99,6 +103,8 @@ const paneReducer = (state, action) => {
             return {...state, failure: action.failure};
         case MS_RENAMED:
             return {...state, renamed: action.renamed};
+        case MS_PROGRESS:
+            return {...state, progress: action.progress};
         default:
             return state;
     }

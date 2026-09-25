@@ -1,6 +1,9 @@
 {
   "multisite-manager": {
     "label": {
+      "cancelTransfer": "Arrêter",
+      "cancelled": "Arrêté après {{count}} élément",
+      "cancelled_plural": "Arrêté après {{count}} éléments",
       "chooseDestination": "{{count}} prêt — cliquez un dossier pour choisir où",
       "chooseDestination_plural": "{{count}} prêts — cliquez un dossier pour choisir où",
       "copy": "Copier",
@@ -33,6 +36,7 @@
       "transferFailed": "{{count}} élément n’a pas pu être déplacé",
       "transferFailedHint": "« {{name}} » ne peut pas être placé ici. Choisissez un dossier qui accepte ce type de contenu.",
       "transferFailed_plural": "{{count}} éléments n’ont pas pu être déplacés",
+      "transferring": "Transfert de {{done}} sur {{total}}…",
       "translatedIn": "Traduit en : {{languages}}",
       "type": "Type",
       "undo": "Annuler",

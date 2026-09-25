@@ -1,5 +1,5 @@
 import {useDispatch} from 'react-redux';
-import {msFailure, msHighlight, msOpenPaths, msReload, msRenamed, msSetUndo} from './MultisiteManager.redux';
+import {msFailure, msHighlight, msOpenPaths, msProgress, msReload, msRenamed, msSetUndo} from './MultisiteManager.redux';
 import {usePaste} from './usePaste';
 import {renamesIn} from './renames';
 
@@ -24,9 +24,15 @@ export const useTransfer = () => {
      */
     const transfer = async ({clipboard, toPane, destination, fromPane, asReferenceTypes}) => {
         // A reference never empties the source, so fromPane is irrelevant to it
+        // Reported per item, so a transfer of fifty is not fifty seconds of silence
+        const onProgress = (done, total) => dispatch(msProgress(toPane, {done, total}));
+        onProgress(0, clipboard.nodes.length);
+
         const {failures, paths, results} = asReferenceTypes ?
-            await pasteAsReference(clipboard.nodes, destination, asReferenceTypes) :
-            await paste(clipboard, destination);
+            await pasteAsReference(clipboard.nodes, destination, asReferenceTypes, onProgress) :
+            await paste(clipboard, destination, onProgress);
+
+        dispatch(msProgress(toPane, null));
 
         // Only a move can be put back where it came from; a copy or a reference made something new,
         // and taking that back means removing it

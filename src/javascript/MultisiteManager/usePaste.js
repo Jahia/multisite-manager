@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import {useApolloClient} from '@apollo/client';
 import gql from 'graphql-tag';
+import {beginTransfer, isCancelled} from './transferControl';
 
 /**
  * Copying and moving between sites.
@@ -65,8 +66,9 @@ export const usePaste = () => {
      *          where each node landed - the server renames on conflict, so the destination path is
      *          not something the caller could have worked out
      */
-    const paste = async (clipboard, destination) => {
+    const paste = async (clipboard, destination, onProgress) => {
         setIsPasting(true);
+        beginTransfer();
         const mutation = clipboard.type === 'cut' ? MOVE_NODE : COPY_NODE;
         const failures = [];
         const paths = [];
@@ -77,6 +79,11 @@ export const usePaste = () => {
         // One at a time rather than in parallel: a move renames on conflict, and concurrent pastes
         // into the same folder would race over the names they are given.
         for (const node of clipboard.nodes) {
+            // Between items, never inside one: what has been sent is finished
+            if (isCancelled()) {
+                break;
+            }
+
             try {
                 // eslint-disable-next-line no-await-in-loop
                 const {data} = await client.mutate({
@@ -104,6 +111,8 @@ export const usePaste = () => {
                 console.error('Could not paste ' + node.path + ' into ' + destination, e);
                 failures.push({node, error: e});
             }
+
+            onProgress?.(pasted + failures.length, clipboard.nodes.length);
         }
 
         setIsPasting(false);
@@ -118,14 +127,19 @@ export const usePaste = () => {
      * @param {object} typeByPath the reference type for each node, from the rules check
      * @returns {Promise<{pasted: number, failures: Array, paths: string[]}>} what happened
      */
-    const pasteAsReference = async (nodes, destination, typeByPath) => {
+    const pasteAsReference = async (nodes, destination, typeByPath, onProgress) => {
         setIsPasting(true);
+        beginTransfer();
         const failures = [];
         const paths = [];
         const results = [];
         let pasted = 0;
 
         for (const node of nodes) {
+            if (isCancelled()) {
+                break;
+            }
+
             const referenceType = typeByPath[node.path];
             if (!referenceType) {
                 failures.push({node, error: new Error('Nothing can reference ' + node.path)});
@@ -160,6 +174,8 @@ export const usePaste = () => {
                 console.error('Could not reference ' + node.path + ' in ' + destination, e);
                 failures.push({node, error: e});
             }
+
+            onProgress?.(pasted + failures.length, nodes.length);
         }
 
         setIsPasting(false);

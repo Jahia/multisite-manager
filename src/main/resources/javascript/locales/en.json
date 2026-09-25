@@ -1,6 +1,9 @@
 {
   "multisite-manager": {
     "label": {
+      "cancelTransfer": "Stop",
+      "cancelled": "Stopped after {{count}} item",
+      "cancelled_plural": "Stopped after {{count}} items",
       "chooseDestination": "{{count}} ready — click a folder to choose where",
       "chooseDestination_plural": "{{count}} ready — click a folder to choose where",
       "copy": "Copy",
@@ -33,6 +36,7 @@
       "transferFailed": "{{count}} item could not be moved",
       "transferFailedHint": "“{{name}}” cannot be placed here. Choose a folder that accepts this kind of content.",
       "transferFailed_plural": "{{count}} items could not be moved",
+      "transferring": "Transferring {{done}} of {{total}}…",
       "translatedIn": "Translated in: {{languages}}",
       "type": "Type",
       "undo": "Undo",
