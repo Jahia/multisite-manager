@@ -1,5 +1,5 @@
-import {SearchQueryHandler} from '@jahia/jcontent';
 import {MultisiteTreeQueryHandler} from './multisiteQueryHandler';
+import {MultisiteSearchQueryHandler} from './multisiteSearchQueryHandler';
 
 /**
  * One accordion item per pane - not to draw an accordion, but because useLayoutQuery resolves its
@@ -21,7 +21,7 @@ export const registerPaneAccordions = (registry, pane) => {
         },
         treeConfig: {selectableTypes: [], openableTypes: []},
         tableConfig: {
-            queryHandler: SearchQueryHandler,
+            queryHandler: MultisiteSearchQueryHandler,
             defaultSort: {orderBy: 'displayName', order: 'ASC'}
         }
     });
