@@ -70,6 +70,8 @@ export const usePaste = () => {
         const mutation = clipboard.type === 'cut' ? MOVE_NODE : COPY_NODE;
         const failures = [];
         const paths = [];
+        // What was made, and where each thing came from - enough to undo it afterwards
+        const results = [];
         let pasted = 0;
 
         // One at a time rather than in parallel: a move renames on conflict, and concurrent pastes
@@ -81,9 +83,16 @@ export const usePaste = () => {
                     mutation,
                     variables: {pathOrId: node.path, destParentPathOrId: destination}
                 });
-                const landed = data?.jcr?.pasteNode?.node?.path;
-                if (landed) {
-                    paths.push(landed);
+                const landed = data?.jcr?.pasteNode?.node;
+                if (landed?.path) {
+                    paths.push(landed.path);
+                    results.push({
+                        uuid: landed.uuid,
+                        path: landed.path,
+                        name: node.displayName || node.name,
+                        // Where it was before, which is where an undo has to put it back
+                        previousParent: node.path.substring(0, node.path.lastIndexOf('/'))
+                    });
                 }
 
                 pasted += 1;
@@ -94,7 +103,7 @@ export const usePaste = () => {
         }
 
         setIsPasting(false);
-        return {pasted, failures, paths};
+        return {pasted, failures, paths, results};
     };
 
     /**
@@ -109,6 +118,7 @@ export const usePaste = () => {
         setIsPasting(true);
         const failures = [];
         const paths = [];
+        const results = [];
         let pasted = 0;
 
         for (const node of nodes) {
@@ -129,9 +139,10 @@ export const usePaste = () => {
                         referenceType
                     }
                 });
-                const landed = data?.jcr?.pasteNode?.node?.path;
-                if (landed) {
-                    paths.push(landed);
+                const landed = data?.jcr?.pasteNode?.node;
+                if (landed?.path) {
+                    paths.push(landed.path);
+                    results.push({uuid: landed.uuid, path: landed.path, name: node.displayName || node.name});
                 }
 
                 pasted += 1;
@@ -142,7 +153,7 @@ export const usePaste = () => {
         }
 
         setIsPasting(false);
-        return {pasted, failures, paths};
+        return {pasted, failures, paths, results};
     };
 
     return {paste, pasteAsReference, isPasting};

@@ -35,6 +35,7 @@ export const MS_RELOAD = 'MULTISITE_RELOAD';
 export const MS_CLIPBOARD = 'MULTISITE_CLIPBOARD';
 export const MS_HIGHLIGHT = 'MULTISITE_HIGHLIGHT';
 export const MS_FAILURE = 'MULTISITE_FAILURE';
+export const MS_UNDO = 'MULTISITE_UNDO';
 
 export const msSetSite = (pane, site) => ({type: MS_SET_SITE, pane, site});
 export const msSetPath = (pane, path) => ({type: MS_SET_PATH, pane, path});
@@ -49,6 +50,10 @@ export const msFailure = (pane, failure) => ({type: MS_FAILURE, pane, failure});
 /** The type is 'copy' or 'cut'; an empty nodes list means the clipboard is empty. */
 export const msSetClipboard = (type, nodes) => ({type: MS_CLIPBOARD, clipboard: {type, nodes}});
 export const msClearClipboard = () => ({type: MS_CLIPBOARD, clipboard: {type: 'copy', nodes: []}});
+
+/** What the last transfer did, and so what taking it back would mean. One level, deliberately. */
+export const msSetUndo = snapshot => ({type: MS_UNDO, undo: snapshot});
+export const msClearUndo = () => ({type: MS_UNDO, undo: null});
 
 const paneReducer = (state, action) => {
     switch (action.type) {
@@ -83,12 +88,19 @@ const initialState = {
     ...PANES.reduce((acc, pane) => ({...acc, [pane]: {...emptyPane}}), {}),
     // One clipboard for the whole manager, not one per pane: copying in one side and pasting in the
     // other is the entire point, so a per-pane clipboard would have nothing to say
-    clipboard: {type: 'copy', nodes: []}
+    clipboard: {type: 'copy', nodes: []},
+    // The last transfer, so it can be taken back. It names the pane it landed in, which is where
+    // the control to undo it belongs.
+    undo: null
 };
 
 export const multisiteManager = (state = initialState, action = {}) => {
     if (action.type === MS_CLIPBOARD) {
         return {...state, clipboard: action.clipboard};
+    }
+
+    if (action.type === MS_UNDO) {
+        return {...state, undo: action.undo};
     }
 
     if (!action.pane || !PANES.includes(action.pane)) {

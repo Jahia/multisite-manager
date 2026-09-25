@@ -6,6 +6,7 @@ import {Button, Copy, Cut, Paste, PasteAsReference, Reload, Typography} from '@j
 import {msClearClipboard, msFailure, msReload, msSetClipboard, msSetSelection} from './MultisiteManager.redux';
 import {OTHER_PANE, REDUX_KEY} from './MultisiteManager.constants';
 import {useTransfer} from './useTransfer';
+import UndoButton from './UndoButton';
 import {useTransferCheck} from './transferRules';
 import styles from './MultisiteManager.scss';
 
@@ -134,6 +135,7 @@ export const PaneToolbar = ({pane}) => {
                     data-sel-role="multisite-paste-reference"
                     onClick={onPasteAsReference}
             />
+            <UndoButton pane={pane} isBusy={isPasting}/>
             <Button size="default"
                     variant="ghost"
                     icon={<Reload/>}

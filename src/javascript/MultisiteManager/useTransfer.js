@@ -1,5 +1,5 @@
 import {useDispatch} from 'react-redux';
-import {msFailure, msHighlight, msOpenPaths, msReload} from './MultisiteManager.redux';
+import {msFailure, msHighlight, msOpenPaths, msReload, msSetUndo} from './MultisiteManager.redux';
 import {usePaste} from './usePaste';
 
 /**
@@ -23,9 +23,20 @@ export const useTransfer = () => {
      */
     const transfer = async ({clipboard, toPane, destination, fromPane, asReferenceTypes}) => {
         // A reference never empties the source, so fromPane is irrelevant to it
-        const {failures, paths} = asReferenceTypes ?
+        const {failures, paths, results} = asReferenceTypes ?
             await pasteAsReference(clipboard.nodes, destination, asReferenceTypes) :
             await paste(clipboard, destination);
+
+        // Only a move can be put back where it came from; a copy or a reference made something new,
+        // and taking that back means removing it
+        const kind = (!asReferenceTypes && clipboard.type === 'cut') ? 'move' : 'create';
+        dispatch(msSetUndo(results.length === 0 ? null : {
+            kind,
+            pane: toPane,
+            fromPane,
+            destination,
+            entries: results
+        }));
 
         // A destination that cannot hold what was dropped is the common failure, and used to be
         // invisible: the server refused, the console recorded it, and the screen said nothing.

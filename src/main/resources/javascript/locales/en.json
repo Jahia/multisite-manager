@@ -22,7 +22,12 @@
       "transferFailed": "{{count}} item could not be moved",
       "transferFailedHint": "“{{name}}” cannot be placed here. Choose a folder that accepts this kind of content.",
       "transferFailed_plural": "{{count}} items could not be moved",
-      "type": "Type"
+      "type": "Type",
+      "undo": "Undo",
+      "undoCreate": "Delete the copy of “{{name}}” that was just pasted",
+      "undoCreate_plural": "Delete the {{count}} items that were just pasted",
+      "undoMove": "Move “{{name}}” back where it came from",
+      "undoMove_plural": "Move {{count}} items back where they came from"
     }
   }
 }

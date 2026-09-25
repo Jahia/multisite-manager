@@ -22,7 +22,12 @@
       "transferFailed": "{{count}} Element konnte nicht verschoben werden",
       "transferFailedHint": "„{{name}}“ kann hier nicht abgelegt werden. Wählen Sie einen Ordner, der diese Art von Inhalt aufnimmt.",
       "transferFailed_plural": "{{count}} Elemente konnten nicht verschoben werden",
-      "type": "Typ"
+      "type": "Typ",
+      "undo": "Rückgängig",
+      "undoCreate": "Die soeben eingefügte Kopie von „{{name}}“ löschen",
+      "undoCreate_plural": "Die {{count}} soeben eingefügten Elemente löschen",
+      "undoMove": "„{{name}}“ an den ursprünglichen Ort zurücklegen",
+      "undoMove_plural": "{{count}} Elemente an ihren ursprünglichen Ort zurücklegen"
     }
   }
 }
