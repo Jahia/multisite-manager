@@ -12,7 +12,9 @@
     "webpack": "node --max_old_space_size=2048 ./node_modules/webpack/bin/webpack.js",
     "clean": "rimraf *.log src/main/resources/javascript/apps",
     "lint": "eslint --ext js,jsx .",
-    "lint:fix": "eslint --ext js,jsx --fix ."
+    "lint:fix": "eslint --ext js,jsx --fix .",
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "dx-extends": {
     "@jahia/jahia-ui-root": "^0.0.1",
@@ -51,6 +53,7 @@
     "@babel/preset-env": "^7.13.12",
     "@babel/preset-react": "^7.12.13",
     "@jahia/eslint-config": "^2.1.0",
+    "babel-jest": "29",
     "babel-loader": "^8.1.0",
     "clean-webpack-plugin": "^4.0.0",
     "copy-webpack-plugin": "^9.0.1",
@@ -60,6 +63,8 @@
     "eslint-plugin-jest": "24.7.0",
     "eslint-plugin-react": "7.32.2",
     "eslint-plugin-react-hooks": "4.6.0",
+    "jest": "29",
+    "jest-environment-jsdom": "29",
     "rimraf": "^3.0.0",
     "sass": "^1.51.0",
     "sass-loader": "^13.0.0",
