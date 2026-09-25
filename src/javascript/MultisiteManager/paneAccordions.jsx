@@ -39,8 +39,15 @@ const paneRenderer = pane => ({
     }
 });
 
+// Not exported by jContent, and a remote import would not resolve anyway - it is two fields
+const SORT_TREE_BY_NAME_ASC = {fieldName: 'displayName', sortType: 'ASC'};
+
 // Only the three that answer "what content does this site have" - the manager exists to move pages,
 // content and media between sites, so search, categories and the app accordions are left out.
+//
+// treeConfig is what ContentTree reads (openable/selectable types, sorting, drag and drop);
+// tableConfig is what the content list will read once there is one. Both are required: ContentTree
+// dereferences item.treeConfig without guarding it.
 const sections = [
     {
         key: 'pages',
@@ -49,6 +56,12 @@ const sections = [
         rootPath: '/sites/{site}',
         // The systemsite has no pages, and an empty accordion only invites a dead end
         isEnabled: siteKey => siteKey !== 'systemsite',
+        treeConfig: {
+            hideRoot: true,
+            rootLabel: 'jcontent:label.contentManager.browsePages',
+            selectableTypes: ['jnt:page', 'jnt:virtualsite', 'jnt:externalLink', 'jnt:nodeLink', 'jnt:navMenuText', 'jmix:visibleInPagesTree'],
+            openableTypes: ['jnt:page', 'jnt:virtualsite', 'jnt:navMenuText', 'jmix:visibleInPagesTree']
+        },
         tableConfig: {queryHandler: PagesQueryHandler, typeFilter: ['jnt:page']}
     },
     {
@@ -56,6 +69,12 @@ const sections = [
         icon: <File/>,
         label: 'multisite-manager:label.content',
         rootPath: '/sites/{site}/contents',
+        treeConfig: {
+            rootLabel: 'jcontent:label.contentManager.browseFolders',
+            sortBy: SORT_TREE_BY_NAME_ASC,
+            selectableTypes: ['jmix:cmContentTreeDisplayable', 'jmix:visibleInContentTree', 'jnt:contentFolder'],
+            openableTypes: ['jmix:cmContentTreeDisplayable', 'jmix:visibleInContentTree', 'jnt:contentFolder']
+        },
         tableConfig: {queryHandler: ContentFoldersQueryHandler, typeFilter: ['jnt:content']}
     },
     {
@@ -63,6 +82,12 @@ const sections = [
         icon: <Collections/>,
         label: 'multisite-manager:label.media',
         rootPath: '/sites/{site}/files',
+        treeConfig: {
+            rootLabel: 'jcontent:label.contentManager.browseFiles',
+            sortBy: SORT_TREE_BY_NAME_ASC,
+            selectableTypes: ['jnt:folder'],
+            openableTypes: ['jnt:folder']
+        },
         tableConfig: {queryHandler: FilesQueryHandler, typeFilter: ['jnt:file', 'jnt:folder']}
     }
 ];

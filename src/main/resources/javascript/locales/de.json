@@ -1,10 +1,15 @@
 {
   "multisite-manager": {
     "label": {
-      "title": "Multisite-Manager",
-      "pages": "Seiten",
       "content": "Inhaltsordner",
-      "media": "Medien"
+      "empty": "Dieser Ordner ist leer",
+      "error": "Dieser Inhalt konnte nicht gelesen werden",
+      "media": "Medien",
+      "name": "Name",
+      "pages": "Seiten",
+      "selectFolder": "Wählen Sie einen Ordner, um seinen Inhalt zu sehen",
+      "title": "Multisite-Manager",
+      "type": "Typ"
     }
   }
 }

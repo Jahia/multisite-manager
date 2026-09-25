@@ -7,16 +7,40 @@
     background-color: var(--color-gray_light);
 }
 
+/* Each pane is half the width and splits again into its own tree and content list */
 .pane {
     display: flex;
     flex: 1 1 50%;
-    flex-direction: column;
     min-width: 0;
     overflow: hidden;
     background-color: var(--color-light);
 }
 
+.paneNav {
+    display: flex;
+    flex: 0 0 260px;
+    flex-direction: column;
+    overflow: auto;
+    border-right: 1px solid var(--color-gray_light);
+}
+
 .paneHeader {
     padding: var(--spacing-small);
     border-bottom: 1px solid var(--color-gray_light);
+}
+
+.contentList {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: auto;
+}
+
+.contentPlaceholder {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-medium);
+    color: var(--color-gray_dark);
+    text-align: center;
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 import {useHistory} from 'react-router';
-import {PrimaryNavItem, Simulate} from '@jahia/moonstone';
+import {PrimaryNavItem, SwapHoriz} from '@jahia/moonstone';
 import {MULTISITE_ROUTE} from './MultisiteManager/MultisiteManager.constants';
 
 export const MultisiteManagerNavItem = () => {
@@ -13,7 +13,7 @@ export const MultisiteManagerNavItem = () => {
                         role="multisite-manager"
                         isSelected={history.location.pathname.startsWith(MULTISITE_ROUTE)}
                         label={t('multisite-manager:label.title')}
-                        icon={<Simulate/>}
+                        icon={<SwapHoriz/>}
                         onClick={() => history.push(MULTISITE_ROUTE)}
         />
     );

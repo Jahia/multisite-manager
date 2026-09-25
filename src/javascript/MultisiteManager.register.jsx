@@ -1,5 +1,6 @@
 import React from 'react';
 import i18next from 'i18next';
+import {registry} from '@jahia/ui-extender';
 import en from '../main/resources/javascript/locales/en.json';
 import fr from '../main/resources/javascript/locales/fr.json';
 import de from '../main/resources/javascript/locales/de.json';
@@ -18,7 +19,7 @@ const registerResources = () => {
     });
 };
 
-export default async function (registry) {
+export default async function () {
     registerResources();
     await i18next.loadNamespaces('multisite-manager');
 

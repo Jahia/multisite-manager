@@ -1,10 +1,15 @@
 {
   "multisite-manager": {
     "label": {
-      "title": "Gestionnaire multisite",
-      "pages": "Pages",
       "content": "Dossiers de contenu",
-      "media": "Médias"
+      "empty": "Ce dossier est vide",
+      "error": "Ce contenu n’a pas pu être lu",
+      "media": "Médias",
+      "name": "Nom",
+      "pages": "Pages",
+      "selectFolder": "Sélectionnez un dossier pour voir son contenu",
+      "title": "Gestionnaire multisite",
+      "type": "Type"
     }
   }
 }

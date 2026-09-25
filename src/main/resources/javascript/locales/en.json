@@ -1,10 +1,15 @@
 {
   "multisite-manager": {
     "label": {
-      "title": "Multisite manager",
-      "pages": "Pages",
       "content": "Content folders",
-      "media": "Media"
+      "empty": "This folder is empty",
+      "error": "This content could not be read",
+      "media": "Media",
+      "name": "Name",
+      "pages": "Pages",
+      "selectFolder": "Select a folder to see what it contains",
+      "title": "Multisite manager",
+      "type": "Type"
     }
   }
 }

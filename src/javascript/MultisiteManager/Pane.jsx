@@ -5,10 +5,11 @@ import {ContentNavigation, SiteSwitcher} from '@jahia/jcontent';
 import {registry} from '@jahia/ui-extender';
 import {msSetMode, msSetPath, msSetSite, paneSelector} from './MultisiteManager.redux';
 import {paneTarget, REDUX_KEY} from './MultisiteManager.constants';
+import PaneContent from './PaneContent';
 import styles from './MultisiteManager.scss';
 
 /**
- * One side of the manager: a site to look at, and that site's content beneath it.
+ * One side of the manager: a site to look at, its tree, and the contents of the selected folder.
  *
  * The switcher is jContent's own, which already lists every site filtered by jContentAccess - the
  * permission that decides what a reader may see. Pointing it at this pane's state rather than the
@@ -38,25 +39,29 @@ export const Pane = ({pane}) => {
         path: state[REDUX_KEY][pane].path
     });
 
+    const header = (
+        <div className={styles.paneHeader}>
+            <SiteSwitcher selector={switcherSelector}
+                          onSelectAction={siteNode => msSetSite(pane, siteNode.name)}/>
+        </div>
+    );
+
     return (
         <section className={styles.pane} data-sel-role={`multisite-pane-${pane}`}>
-            <ContentNavigation
-                isReversed={false}
-                accordionItemTarget={paneTarget(pane)}
-                selector={paneSelector(pane)}
-                header={
-                    <div className={styles.paneHeader}>
-                        <SiteSwitcher selector={switcherSelector}
-                                      onSelectAction={siteNode => msSetSite(pane, siteNode.name)}/>
-                    </div>
-                }
-                handleNavigationAction={(nextMode, path) => {
-                    // Two dispatches rather than a batch: the manager has no other writer racing
-                    // it, and keeping them separate keeps the actions readable in the devtools.
-                    dispatch(msSetMode(pane, nextMode));
-                    return msSetPath(pane, path);
-                }}
-            />
+            <nav className={styles.paneNav}>
+                <ContentNavigation isReversed={false}
+                                   accordionItemTarget={paneTarget(pane)}
+                                   selector={paneSelector(pane)}
+                                   header={header}
+                                   handleNavigationAction={(nextMode, path) => {
+                                       // Two dispatches rather than a batch: nothing else writes to
+                                       // this pane, and separate actions read better in the devtools
+                                       dispatch(msSetMode(pane, nextMode));
+                                       return msSetPath(pane, path);
+                                   }}
+                />
+            </nav>
+            <PaneContent pane={pane}/>
         </section>
     );
 };
