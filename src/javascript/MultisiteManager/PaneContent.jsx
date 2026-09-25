@@ -14,6 +14,7 @@ import {canDropInto, DRAG_TYPE, toDraggable} from './dragAndDrop';
 import {flattenTree} from './treeRows';
 import {isFolder} from './dragAndDrop';
 import {useDropCheck} from './DropCheck.context';
+import {paneSearchMode} from './paneAccordions';
 import ContentRow from './ContentRow';
 import styles from './MultisiteManager.scss';
 
@@ -39,7 +40,7 @@ Placeholder.propTypes = {children: PropTypes.node};
  * Structured mode means the query only descends into branches that are open, so opening a site
  * with a great many pages costs nothing until those branches are asked for.
  */
-const Tree = ({pane, site, mode, reloadCount}) => {
+const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
     const {t} = useTranslation('multisite-manager');
     const dispatch = useDispatch();
     const {language, uilang} = useSelector(state => ({language: state.language, uilang: state.uilang}));
@@ -65,6 +66,8 @@ const Tree = ({pane, site, mode, reloadCount}) => {
         });
     };
 
+    const isSearching = Boolean(searchTerms);
+
     const {result, loading, error, refetch} = useLayoutQuery({
         mode,
         siteKey: site,
@@ -76,8 +79,11 @@ const Tree = ({pane, site, mode, reloadCount}) => {
         openPaths: openPaths.length > 0 ? openPaths : [rootPath],
         hideRoot: false,
         tableView: {viewMode: VIEW_MODE_STRUCTURED, viewType: VIEW_TYPE_CONTENT},
-        searchPath: '',
-        searchTerms: ''
+        // Searching looks across the whole site: the point is to find something without knowing
+        // where it is, so scoping it to the open folder would defeat it
+        searchPath: rootPath,
+        searchContentType: 'jmix:searchable',
+        searchTerms: searchTerms || ''
     }, [ReferenceFields]);
 
     // Remounting the tree is not enough to see a transfer: useLayoutQuery passes no fetchPolicy to
@@ -120,12 +126,18 @@ const Tree = ({pane, site, mode, reloadCount}) => {
     // Opening a branch re-runs the whole query, and network-only means the result comes back empty
     // before it comes back full. Rendering that would blank the tree and - worse - claim the site
     // holds nothing. So the last rows that existed stay on screen until real ones replace them.
-    const fresh = flattenTree(result?.nodes);
+    // Results come back as a plain list; only the tree has a shape worth walking
+    const fresh = isSearching ?
+        (result?.nodes || []).map(node => ({node, depth: 0, hasChildren: false})) :
+        flattenTree(result?.nodes);
+
     if (!loading && fresh.length > 0) {
         lastRows.current = fresh;
     }
 
-    const rows = fresh.length > 0 ? fresh : lastRows.current;
+    // Holding the previous rows is right while a branch opens, and wrong while searching: the old
+    // rows are answers to a different question
+    const rows = (fresh.length > 0 || isSearching) ? fresh : lastRows.current;
 
     // Which folders this pane is showing, so a drag can ask about all of them at once
     register(pane, rows
@@ -134,10 +146,17 @@ const Tree = ({pane, site, mode, reloadCount}) => {
         .map(node => node.path));
 
     if (rows.length === 0) {
-        // Nothing to keep and nothing arrived: either the first load, or a site that really is bare
-        return loading ?
-            <div className={styles.contentPlaceholder}><Loader size="big"/></div> :
-            <Placeholder>{t('multisite-manager:label.empty')}</Placeholder>;
+        if (loading) {
+            return <div className={styles.contentPlaceholder}><Loader size="big"/></div>;
+        }
+
+        return (
+            <Placeholder>
+                {isSearching ?
+                    t('multisite-manager:label.searchEmpty', {terms: searchTerms}) :
+                    t('multisite-manager:label.empty')}
+            </Placeholder>
+        );
     }
 
     const selectedPaths = new Set(selection.map(node => node.path));
@@ -220,13 +239,14 @@ Tree.propTypes = {
     pane: PropTypes.string.isRequired,
     site: PropTypes.string.isRequired,
     mode: PropTypes.string.isRequired,
-    reloadCount: PropTypes.number
+    reloadCount: PropTypes.number,
+    searchTerms: PropTypes.string
 };
 
 export const PaneContent = ({pane}) => {
     const {t} = useTranslation('multisite-manager');
     const dispatch = useDispatch();
-    const {site, mode, reloadCount, highlighted} = useSelector(state => state[REDUX_KEY][pane]);
+    const {site, mode, reloadCount, highlighted, searchTerms} = useSelector(state => state[REDUX_KEY][pane]);
 
     // Cleared here rather than in the tree, which is remounted on every reload and would restart
     // its own timer. A tint that outstayed its welcome would read as a property of the row.
@@ -246,7 +266,16 @@ export const PaneContent = ({pane}) => {
 
     // Passed as a prop, not a key: the tree has to stay mounted so it can refetch rather than be
     // rebuilt from a cache that still holds the state before the transfer.
-    return <Tree pane={pane} site={site} mode={mode} reloadCount={reloadCount}/>;
+    // Searching swaps the query configuration, not the component: the rows, the selection, the
+    // dragging and the tint all behave the same whichever produced them
+    return (
+        <Tree pane={pane}
+              site={site}
+              mode={searchTerms ? paneSearchMode(pane) : mode}
+              reloadCount={reloadCount}
+              searchTerms={searchTerms}
+        />
+    );
 };
 
 PaneContent.propTypes = {

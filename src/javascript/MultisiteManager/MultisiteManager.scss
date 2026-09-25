@@ -26,8 +26,16 @@
 }
 
 .paneHeader {
+    display: flex;
+    gap: var(--spacing-small);
+    align-items: center;
     padding: var(--spacing-small);
     border-bottom: 1px solid var(--color-gray_light);
+}
+
+.search {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .contentList {
@@ -189,4 +197,13 @@
     outline-offset: -2px;
     background-color: var(--color-danger_plain20);
     cursor: not-allowed;
+}
+
+/* The languages a node carries, kept quiet: useful when scanning, not part of the name */
+.languages {
+    color: var(--color-gray_dark);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
 }

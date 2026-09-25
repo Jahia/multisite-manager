@@ -7,6 +7,7 @@ import {REDUX_KEY} from './MultisiteManager.constants';
 import {paneMode} from './paneAccordions';
 import PaneContent from './PaneContent';
 import PaneToolbar from './PaneToolbar';
+import PaneSearch from './PaneSearch';
 import styles from './MultisiteManager.scss';
 
 /**
@@ -54,6 +55,7 @@ export const Pane = ({pane}) => {
             <div className={styles.paneHeader}>
                 <SiteSwitcher selector={switcherSelector}
                               onSelectAction={siteNode => msSetSite(pane, siteNode.name)}/>
+                <PaneSearch pane={pane}/>
             </div>
             <PaneToolbar pane={pane}/>
             <PaneContent pane={pane}/>

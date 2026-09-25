@@ -25,6 +25,13 @@ const DESTINATION_AND_SOURCES = gql`
             destination: nodeByPath(path: $destination) {
                 uuid
                 allowedChildNodeTypes { name }
+                # Whether this user may add anything here at all. Read access is enough to browse a
+                # site and see its folders, so a destination can look perfectly inviting and refuse.
+                canAdd: hasPermission(permissionName: "jcr:addChildNodes_default")
+                site {
+                    sitekey
+                    languages { language activeInEdit }
+                }
             }
             sources: nodesByPath(paths: $sourcePaths) {
                 uuid
@@ -32,6 +39,7 @@ const DESTINATION_AND_SOURCES = gql`
                 isFile: isNodeType(type: {types: ["jnt:file"]})
                 isContentFolder: isNodeType(type: {types: ["jnt:contentFolder"]})
                 isDroppable: isNodeType(type: {types: ["jmix:droppableContent"]})
+                translationLanguages
             }
         }
     }
@@ -113,7 +121,10 @@ export const useTransferCheck = (destination, clipboard) => {
         fetchPolicy: 'cache-first'
     });
 
-    const empty = {loading: false, canPaste: false, canReference: false, typeByPath: {}};
+    const empty = {
+        loading: false, canPaste: false, canReference: false, typeByPath: {},
+        isReadOnly: false, missingLanguages: []
+    };
 
     if (skip) {
         return empty;
@@ -123,16 +134,31 @@ export const useTransferCheck = (destination, clipboard) => {
         return {...empty, loading: true};
     }
 
+    const destination_ = first.data?.jcr?.destination;
     const allowed = new Set(childTypes);
     const sources = first.data?.jcr?.sources || [];
 
+    // Read access is enough to browse, so a folder can look inviting and still refuse everything
+    const isReadOnly = destination_ ? !destination_.canAdd : false;
+
+    // Languages the destination site does not publish. Content carrying only those arrives with
+    // nothing to show: a warning rather than a refusal, since the transfer itself is legitimate and
+    // the translation can follow.
+    const siteLanguages = new Set((destination_?.site?.languages || [])
+        .filter(l => l.activeInEdit)
+        .map(l => l.language));
+    const sourceLanguages = new Set(sources.flatMap(source => source.translationLanguages || []));
+    const missingLanguages = siteLanguages.size === 0 ?
+        [] :
+        [...sourceLanguages].filter(language => !siteLanguages.has(language));
+
     // Plain paste: every source has to be something this folder accepts
     const verdicts = second.data?.jcr?.sources || [];
-    const canPaste = verdicts.length === paths.length && verdicts.every(s => s.isAllowedChild);
+    const canPaste = !isReadOnly && verdicts.length === paths.length && verdicts.every(s => s.isAllowedChild);
 
     // Reference paste: every source needs a reference type, and the folder has to accept it
     const typeByPath = {};
-    let canReference = sources.length > 0;
+    let canReference = sources.length > 0 && !isReadOnly;
     for (const source of sources) {
         const referenceType = referenceTypeFor(source);
         if (!referenceType || !allowed.has(referenceType)) {
@@ -143,5 +169,12 @@ export const useTransferCheck = (destination, clipboard) => {
         typeByPath[source.path] = referenceType;
     }
 
-    return {loading: false, canPaste, canReference, typeByPath: canReference ? typeByPath : {}};
+    return {
+        loading: false,
+        canPaste,
+        canReference,
+        typeByPath: canReference ? typeByPath : {},
+        isReadOnly,
+        missingLanguages
+    };
 };

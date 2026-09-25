@@ -35,8 +35,8 @@ export const PaneToolbar = ({pane}) => {
     // whether it accepts references to them. Both buttons were previously offered whenever there
     // was anything on the clipboard, so a paste the destination could never accept looked available
     // and then failed.
-    const {loading: isChecking, canPaste: typesAllowPaste, canReference, typeByPath} =
-        useTransferCheck(path, clipboard);
+    const {loading: isChecking, canPaste: typesAllowPaste, canReference, typeByPath,
+        isReadOnly, missingLanguages} = useTransferCheck(path, clipboard);
 
     const canPaste = hasClipboard && Boolean(path) && !isPasting && !isChecking && typesAllowPaste;
 
@@ -83,8 +83,16 @@ export const PaneToolbar = ({pane}) => {
         status = t('multisite-manager:label.selected', {count: selection.length});
     } else if (hasClipboard && !path) {
         status = t('multisite-manager:label.chooseDestination', {count: clipboard.nodes.length});
+    } else if (hasClipboard && !isChecking && isReadOnly) {
+        status = t('multisite-manager:label.readOnly');
     } else if (hasClipboard && !isChecking && !typesAllowPaste) {
         status = t('multisite-manager:label.pasteRefused');
+    } else if (hasClipboard && !isChecking && missingLanguages.length > 0) {
+        // A caution, not a refusal: the transfer is legitimate and the translation can follow
+        status = t('multisite-manager:label.missingLanguages', {
+            languages: missingLanguages.join(', '),
+            count: missingLanguages.length
+        });
     } else if (hasClipboard) {
         status = t('multisite-manager:label.pasteInto', {
             count: clipboard.nodes.length,

@@ -42,6 +42,9 @@ const SORT_BY_NAME_ASC = {fieldName: 'displayName', sortType: 'ASC'};
 export const ReferenceFields = {
     gql: gql`
         fragment MultisiteReferenceFields on JCRNode {
+            # Which languages this node actually has content in. Empty for a node that is not
+            # translated at all, such as a folder.
+            translationLanguages
             referenced: property(name: "j:node") {
                 refNode {
                     path

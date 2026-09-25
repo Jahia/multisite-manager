@@ -16,6 +16,8 @@ const emptyPane = {
     path: '',
     openPaths: [],
     selection: [],
+    // Non-empty means this pane is showing search results rather than its tree
+    searchTerms: '',
     // Paths of rows just pasted into this pane, tinted briefly so the result of the action is
     // visible without having to hunt for it
     highlighted: [],
@@ -36,6 +38,7 @@ export const MS_CLIPBOARD = 'MULTISITE_CLIPBOARD';
 export const MS_HIGHLIGHT = 'MULTISITE_HIGHLIGHT';
 export const MS_FAILURE = 'MULTISITE_FAILURE';
 export const MS_UNDO = 'MULTISITE_UNDO';
+export const MS_SEARCH = 'MULTISITE_SEARCH';
 
 export const msSetSite = (pane, site) => ({type: MS_SET_SITE, pane, site});
 export const msSetPath = (pane, path) => ({type: MS_SET_PATH, pane, path});
@@ -45,6 +48,7 @@ export const msClosePaths = (pane, paths) => ({type: MS_CLOSE_PATHS, pane, paths
 export const msSetSelection = (pane, selection) => ({type: MS_SET_SELECTION, pane, selection});
 export const msReload = pane => ({type: MS_RELOAD, pane});
 export const msHighlight = (pane, paths) => ({type: MS_HIGHLIGHT, pane, paths});
+export const msSearch = (pane, searchTerms) => ({type: MS_SEARCH, pane, searchTerms});
 export const msFailure = (pane, failure) => ({type: MS_FAILURE, pane, failure});
 
 /** The type is 'copy' or 'cut'; an empty nodes list means the clipboard is empty. */
@@ -75,6 +79,9 @@ const paneReducer = (state, action) => {
             return {...state, selection: action.selection};
         case MS_RELOAD:
             return {...state, reloadCount: state.reloadCount + 1};
+        case MS_SEARCH:
+            // Results are a different set of rows, so a selection made in the tree cannot survive
+            return {...state, searchTerms: action.searchTerms, selection: []};
         case MS_HIGHLIGHT:
             return {...state, highlighted: action.paths};
         case MS_FAILURE:

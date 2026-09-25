@@ -27,6 +27,8 @@ export const ContentRow = ({
     const canHold = isFolder(node) || node.primaryNodeType?.name === 'jnt:virtualsite';
     // Present only on reference nodes; everything else comes back without the property
     const referenced = node.referenced?.refNode;
+    // Empty on anything that is not translated, such as a folder
+    const languages = node.translationLanguages || [];
     const previewable = isImage(node);
     // Where the pointer is, while it is over an image row; null the rest of the time
     const [previewAt, setPreviewAt] = useState(null);
@@ -102,6 +104,13 @@ export const ContentRow = ({
                     </span>
                     <NodeIcon node={node}/>
                     {node.displayName || node.name}
+                    {languages.length > 0 && (
+                        <span className={styles.languages}
+                              title={t('multisite-manager:label.translatedIn', {languages: languages.join(', ')})}
+                        >
+                            {languages.join(' ')}
+                        </span>
+                    )}
                     {referenced && (
                         // Where the referenced thing actually lives. The name a reference carries
                         // says nothing about that, and in a tool about content from elsewhere it is
