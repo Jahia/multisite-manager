@@ -1,6 +1,6 @@
 {
   "name": "@jahia/multisite-manager",
-  "version": "1.0.0-SNAPSHOT",
+  "version": "1.0.0",
   "description": "Browse and transfer content between sites, side by side",
   "license": "MIT",
   "main": "index.js",

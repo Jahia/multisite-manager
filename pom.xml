@@ -9,7 +9,7 @@
     <groupId>org.jahia.se.modules</groupId>
     <artifactId>multisite-manager</artifactId>
     <name>Multisite Manager</name>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>bundle</packaging>
     <description>Browse and transfer content between sites, side by side</description>
 
