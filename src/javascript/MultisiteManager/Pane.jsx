@@ -6,6 +6,7 @@ import {registry} from '@jahia/ui-extender';
 import {msSetMode, msSetPath, msSetSite, paneSelector} from './MultisiteManager.redux';
 import {paneTarget, REDUX_KEY} from './MultisiteManager.constants';
 import PaneContent from './PaneContent';
+import PaneToolbar from './PaneToolbar';
 import styles from './MultisiteManager.scss';
 
 /**
@@ -61,7 +62,10 @@ export const Pane = ({pane}) => {
                                    }}
                 />
             </nav>
-            <PaneContent pane={pane}/>
+            <div className={styles.paneMain}>
+                <PaneToolbar pane={pane}/>
+                <PaneContent pane={pane}/>
+            </div>
         </section>
     );
 };

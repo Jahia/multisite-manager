@@ -1,13 +1,20 @@
 {
   "multisite-manager": {
     "label": {
+      "clipboard": "{{count}} dans le presse-papiers",
+      "clipboard_plural": "{{count}} dans le presse-papiers",
       "content": "Dossiers de contenu",
+      "copy": "Copier",
+      "cut": "Couper",
       "empty": "Ce dossier est vide",
       "error": "Ce contenu n’a pas pu être lu",
       "media": "Médias",
       "name": "Nom",
       "pages": "Pages",
+      "paste": "Coller",
       "selectFolder": "Sélectionnez un dossier pour voir son contenu",
+      "selected": "{{count}} sélectionné",
+      "selected_plural": "{{count}} sélectionnés",
       "title": "Gestionnaire multisite",
       "type": "Type"
     }

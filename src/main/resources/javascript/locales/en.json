@@ -1,13 +1,20 @@
 {
   "multisite-manager": {
     "label": {
+      "clipboard": "{{count}} in clipboard",
+      "clipboard_plural": "{{count}} in clipboard",
       "content": "Content folders",
+      "copy": "Copy",
+      "cut": "Cut",
       "empty": "This folder is empty",
       "error": "This content could not be read",
       "media": "Media",
       "name": "Name",
       "pages": "Pages",
+      "paste": "Paste",
       "selectFolder": "Select a folder to see what it contains",
+      "selected": "{{count}} selected",
+      "selected_plural": "{{count}} selected",
       "title": "Multisite manager",
       "type": "Type"
     }

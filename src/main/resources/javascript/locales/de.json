@@ -1,13 +1,20 @@
 {
   "multisite-manager": {
     "label": {
+      "clipboard": "{{count}} in der Zwischenablage",
+      "clipboard_plural": "{{count}} in der Zwischenablage",
       "content": "Inhaltsordner",
+      "copy": "Kopieren",
+      "cut": "Ausschneiden",
       "empty": "Dieser Ordner ist leer",
       "error": "Dieser Inhalt konnte nicht gelesen werden",
       "media": "Medien",
       "name": "Name",
       "pages": "Seiten",
+      "paste": "Einfügen",
       "selectFolder": "Wählen Sie einen Ordner, um seinen Inhalt zu sehen",
+      "selected": "{{count}} ausgewählt",
+      "selected_plural": "{{count}} ausgewählt",
       "title": "Multisite-Manager",
       "type": "Typ"
     }

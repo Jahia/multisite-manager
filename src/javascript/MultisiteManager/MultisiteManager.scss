@@ -44,3 +44,29 @@
     color: var(--color-gray_dark);
     text-align: center;
 }
+
+.paneMain {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.paneToolbar {
+    display: flex;
+    flex: 0 0 auto;
+    gap: var(--spacing-nano);
+    align-items: center;
+    padding: var(--spacing-small);
+    border-bottom: 1px solid var(--color-gray_light);
+}
+
+.toolbarStatus {
+    margin-left: auto;
+    color: var(--color-gray_dark);
+}
+
+.checkboxCell {
+    width: 40px;
+}

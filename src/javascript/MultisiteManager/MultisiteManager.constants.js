@@ -9,3 +9,6 @@ export const PANES = ['left', 'right'];
 export const paneTarget = pane => `multisite-${pane}`;
 
 export const REDUX_KEY = 'multisiteManager';
+
+/** The pane a transfer came from, given the one it is going to. */
+export const OTHER_PANE = {left: 'right', right: 'left'};

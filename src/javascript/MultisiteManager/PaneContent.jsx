@@ -1,8 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {useTranslation} from 'react-i18next';
 import {
+    Checkbox,
     Loader,
     Table,
     TableBody,
@@ -13,6 +14,7 @@ import {
     Typography
 } from '@jahia/moonstone';
 import {NodeIcon, useLayoutQuery} from '@jahia/jcontent';
+import {msSetSelection} from './MultisiteManager.redux';
 import {REDUX_KEY} from './MultisiteManager.constants';
 import styles from './MultisiteManager.scss';
 
@@ -39,7 +41,9 @@ Placeholder.propTypes = {children: PropTypes.node};
  */
 const ContentListing = ({pane, site, mode, path}) => {
     const {t} = useTranslation('multisite-manager');
+    const dispatch = useDispatch();
     const {language, uilang} = useSelector(state => ({language: state.language, uilang: state.uilang}));
+    const selection = useSelector(state => state[REDUX_KEY][pane].selection);
 
     const {result, loading, error} = useLayoutQuery({
         mode,
@@ -71,18 +75,44 @@ const ContentListing = ({pane, site, mode, path}) => {
         return <Placeholder>{t('multisite-manager:label.empty')}</Placeholder>;
     }
 
+    const selectedPaths = new Set(selection.map(node => node.path));
+    const allSelected = nodes.length > 0 && nodes.every(node => selectedPaths.has(node.path));
+
+    const toggle = node => {
+        const next = selectedPaths.has(node.path) ?
+            selection.filter(selected => selected.path !== node.path) :
+            [...selection, {path: node.path, uuid: node.uuid, name: node.name, displayName: node.displayName}];
+        dispatch(msSetSelection(pane, next));
+    };
+
+    const toggleAll = () => {
+        dispatch(msSetSelection(pane, allSelected ? [] : nodes.map(node => ({
+            path: node.path, uuid: node.uuid, name: node.name, displayName: node.displayName
+        }))));
+    };
+
     return (
         <div className={styles.contentList} data-sel-role={`multisite-content-${pane}`}>
             <Table>
                 <TableHead>
                     <TableRow>
+                        <TableHeadCell className={styles.checkboxCell}>
+                            <Checkbox checked={allSelected} onChange={toggleAll}/>
+                        </TableHeadCell>
                         <TableHeadCell>{t('multisite-manager:label.name')}</TableHeadCell>
                         <TableHeadCell>{t('multisite-manager:label.type')}</TableHeadCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
                     {nodes.map(node => (
-                        <TableRow key={node.uuid || node.path}>
+                        <TableRow key={node.uuid || node.path}
+                                  isHighlighted={selectedPaths.has(node.path)}
+                                  onClick={() => toggle(node)}
+                        >
+                            <TableBodyCell className={styles.checkboxCell}>
+                                <Checkbox checked={selectedPaths.has(node.path)}
+                                          onChange={() => toggle(node)}/>
+                            </TableBodyCell>
                             <TableBodyCell iconStart={<NodeIcon node={node}/>}>
                                 {node.displayName || node.name}
                             </TableBodyCell>
@@ -111,13 +141,15 @@ ContentListing.propTypes = {
  */
 export const PaneContent = ({pane}) => {
     const {t} = useTranslation('multisite-manager');
-    const {site, mode, path} = useSelector(state => state[REDUX_KEY][pane]);
+    const {site, mode, path, reloadCount} = useSelector(state => state[REDUX_KEY][pane]);
 
     if (!site || !mode || !path) {
         return <Placeholder>{t('multisite-manager:label.selectFolder')}</Placeholder>;
     }
 
-    return <ContentListing pane={pane} site={site} mode={mode} path={path}/>;
+    // Using reloadCount as the key remounts the listing after a paste, the simplest way to make
+    // it query again - jContent's refetch registry is not part of its exposed API.
+    return <ContentListing key={reloadCount} pane={pane} site={site} mode={mode} path={path}/>;
 };
 
 PaneContent.propTypes = {
