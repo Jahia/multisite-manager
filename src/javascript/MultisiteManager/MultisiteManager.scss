@@ -70,3 +70,13 @@
 .checkboxCell {
     width: 40px;
 }
+
+/*
+ * A row that was just pasted. The same token the category manager uses for the same job, so the
+ * two screens agree on what "this is what you just did" looks like. The transition applies when
+ * the class is removed, so the tint fades out rather than snapping.
+ */
+.pastedRow {
+    background-color: var(--color-success_plain20) !important;
+    transition: background-color 600ms ease-out;
+}

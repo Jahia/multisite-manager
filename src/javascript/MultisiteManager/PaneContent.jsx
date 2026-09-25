@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {useDispatch, useSelector} from 'react-redux';
 import {useTranslation} from 'react-i18next';
@@ -14,7 +14,7 @@ import {
     Typography
 } from '@jahia/moonstone';
 import {NodeIcon, useLayoutQuery} from '@jahia/jcontent';
-import {msSetSelection} from './MultisiteManager.redux';
+import {msHighlight, msSetSelection} from './MultisiteManager.redux';
 import {REDUX_KEY} from './MultisiteManager.constants';
 import styles from './MultisiteManager.scss';
 
@@ -22,6 +22,10 @@ import styles from './MultisiteManager.scss';
 const VIEW_MODE_FLAT = 'flatList';
 const VIEW_TYPE_CONTENT = 'content';
 const PAGE_SIZE = 50;
+
+// Long enough to find the row after the eye has moved back to the panel, short enough that it is
+// gone before it becomes part of how the row looks
+const HIGHLIGHT_MS = 5000;
 
 const Placeholder = ({children}) => (
     <div className={styles.contentPlaceholder}>
@@ -44,6 +48,7 @@ const ContentListing = ({pane, site, mode, path}) => {
     const dispatch = useDispatch();
     const {language, uilang} = useSelector(state => ({language: state.language, uilang: state.uilang}));
     const selection = useSelector(state => state[REDUX_KEY][pane].selection);
+    const highlighted = useSelector(state => state[REDUX_KEY][pane].highlighted);
 
     const {result, loading, error} = useLayoutQuery({
         mode,
@@ -76,6 +81,7 @@ const ContentListing = ({pane, site, mode, path}) => {
     }
 
     const selectedPaths = new Set(selection.map(node => node.path));
+    const highlightedPaths = new Set(highlighted);
     const allSelected = nodes.length > 0 && nodes.every(node => selectedPaths.has(node.path));
 
     const toggle = node => {
@@ -106,6 +112,7 @@ const ContentListing = ({pane, site, mode, path}) => {
                 <TableBody>
                     {nodes.map(node => (
                         <TableRow key={node.uuid || node.path}
+                                  className={highlightedPaths.has(node.path) ? styles.pastedRow : undefined}
                                   isHighlighted={selectedPaths.has(node.path)}
                                   onClick={() => toggle(node)}
                         >
@@ -141,7 +148,20 @@ ContentListing.propTypes = {
  */
 export const PaneContent = ({pane}) => {
     const {t} = useTranslation('multisite-manager');
-    const {site, mode, path, reloadCount} = useSelector(state => state[REDUX_KEY][pane]);
+    const dispatch = useDispatch();
+    const {site, mode, path, reloadCount, highlighted} = useSelector(state => state[REDUX_KEY][pane]);
+
+    // Cleared here rather than in the listing, which is remounted on every reload and would restart
+    // its own timer. A tint that outstayed its welcome would read as a property of the row.
+    const hasHighlight = highlighted.length > 0;
+    useEffect(() => {
+        if (!hasHighlight) {
+            return undefined;
+        }
+
+        const timer = window.setTimeout(() => dispatch(msHighlight(pane, [])), HIGHLIGHT_MS);
+        return () => window.clearTimeout(timer);
+    }, [dispatch, pane, hasHighlight]);
 
     if (!site || !mode || !path) {
         return <Placeholder>{t('multisite-manager:label.selectFolder')}</Placeholder>;

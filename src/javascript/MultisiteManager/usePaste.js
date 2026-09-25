@@ -43,12 +43,15 @@ export const usePaste = () => {
     /**
      * @param {{type: string, nodes: Array}} clipboard what was copied or cut
      * @param {string} destination path of the folder to paste into
-     * @returns {Promise<{pasted: number, failures: Array}>} what happened, per node
+     * @returns {Promise<{pasted: number, failures: Array, paths: string[]}>} what happened, and
+     *          where each node landed - the server renames on conflict, so the destination path is
+     *          not something the caller could have worked out
      */
     const paste = async (clipboard, destination) => {
         setIsPasting(true);
         const mutation = clipboard.type === 'cut' ? MOVE_NODE : COPY_NODE;
         const failures = [];
+        const paths = [];
         let pasted = 0;
 
         // One at a time rather than in parallel: a move renames on conflict, and concurrent pastes
@@ -56,10 +59,15 @@ export const usePaste = () => {
         for (const node of clipboard.nodes) {
             try {
                 // eslint-disable-next-line no-await-in-loop
-                await client.mutate({
+                const {data} = await client.mutate({
                     mutation,
                     variables: {pathOrId: node.path, destParentPathOrId: destination}
                 });
+                const landed = data?.jcr?.pasteNode?.node?.path;
+                if (landed) {
+                    paths.push(landed);
+                }
+
                 pasted += 1;
             } catch (e) {
                 console.error('Could not paste ' + node.path + ' into ' + destination, e);
@@ -68,7 +76,7 @@ export const usePaste = () => {
         }
 
         setIsPasting(false);
-        return {pasted, failures};
+        return {pasted, failures, paths};
     };
 
     return {paste, isPasting};

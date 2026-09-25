@@ -16,6 +16,9 @@ const emptyPane = {
     path: '',
     openPaths: [],
     selection: [],
+    // Paths of rows just pasted into this pane, tinted briefly so the result of the action is
+    // visible without having to hunt for it
+    highlighted: [],
     // Bumped to make a pane re-read its folder after something has been pasted into it
     reloadCount: 0
 };
@@ -28,6 +31,7 @@ export const MS_CLOSE_PATHS = 'MULTISITE_CLOSE_PATHS';
 export const MS_SET_SELECTION = 'MULTISITE_SET_SELECTION';
 export const MS_RELOAD = 'MULTISITE_RELOAD';
 export const MS_CLIPBOARD = 'MULTISITE_CLIPBOARD';
+export const MS_HIGHLIGHT = 'MULTISITE_HIGHLIGHT';
 
 export const msSetSite = (pane, site) => ({type: MS_SET_SITE, pane, site});
 export const msSetPath = (pane, path) => ({type: MS_SET_PATH, pane, path});
@@ -36,6 +40,7 @@ export const msOpenPaths = (pane, paths) => ({type: MS_OPEN_PATHS, pane, paths})
 export const msClosePaths = (pane, paths) => ({type: MS_CLOSE_PATHS, pane, paths});
 export const msSetSelection = (pane, selection) => ({type: MS_SET_SELECTION, pane, selection});
 export const msReload = pane => ({type: MS_RELOAD, pane});
+export const msHighlight = (pane, paths) => ({type: MS_HIGHLIGHT, pane, paths});
 
 /** The type is 'copy' or 'cut'; an empty nodes list means the clipboard is empty. */
 export const msSetClipboard = (type, nodes) => ({type: MS_CLIPBOARD, clipboard: {type, nodes}});
@@ -46,11 +51,11 @@ const paneReducer = (state, action) => {
         case MS_SET_SITE:
             // A pane that changes site cannot keep its path, open branches or selection: they all
             // belong to the site it is leaving. Mode survives, so you stay in Pages or Media.
-            return {...state, site: action.site, path: '', openPaths: [], selection: []};
+            return {...state, site: action.site, path: '', openPaths: [], selection: [], highlighted: []};
         case MS_SET_PATH:
             // Moving to another folder drops the selection with it, so a later paste cannot act on
             // rows the reader can no longer see
-            return {...state, path: action.path, selection: []};
+            return {...state, path: action.path, selection: [], highlighted: []};
         case MS_SET_MODE:
             return {...state, mode: action.mode};
         case MS_OPEN_PATHS:
@@ -61,6 +66,8 @@ const paneReducer = (state, action) => {
             return {...state, selection: action.selection};
         case MS_RELOAD:
             return {...state, reloadCount: state.reloadCount + 1};
+        case MS_HIGHLIGHT:
+            return {...state, highlighted: action.paths};
         default:
             return state;
     }
