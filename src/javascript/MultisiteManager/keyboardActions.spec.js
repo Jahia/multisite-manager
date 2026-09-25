@@ -7,7 +7,7 @@ const row = (name, depth, hasChildren = false) => ({
     hasChildren
 });
 
-// site > home(open) > child, then files
+// A site holding an open 'home' with one child, and a closed 'files' beside it
 const rows = [row('site', 0, true), row('home', 1, true), row('child', 2), row('files', 1)];
 
 const press = (key, context = {}, modifiers = {}) => keyboardActions(

@@ -51,6 +51,6 @@ describe('thumbnailUrl', () => {
 
     it('should honour a context path', () => {
         window.contextJsParameters = {contextPath: '/jahia'};
-        expect(thumbnailUrl(file('/sites/a/x.jpg'))).toMatch(/^\/jahia\/files\/default\//);
+        expect(thumbnailUrl(file('/sites/a/x.jpg')).startsWith('/jahia/files/default/')).toBe(true);
     });
 });
