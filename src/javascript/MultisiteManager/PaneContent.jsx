@@ -133,7 +133,7 @@ const Tree = ({pane, site, mode}) => {
                         <TableHeadCell className={styles.checkboxCell}>
                             <Checkbox checked={allSelected} onChange={toggleAll}/>
                         </TableHeadCell>
-                        <TableHeadCell>{t('multisite-manager:label.name')}</TableHeadCell>
+                        <TableHeadCell className={styles.nameCell}>{t('multisite-manager:label.name')}</TableHeadCell>
                         <TableHeadCell>{t('multisite-manager:label.type')}</TableHeadCell>
                     </TableRow>
                 </TableHead>

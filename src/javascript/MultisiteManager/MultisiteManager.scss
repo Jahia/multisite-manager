@@ -68,8 +68,21 @@
     color: var(--color-gray_dark);
 }
 
+/*
+ * Moonstone gives every table cell 16px of padding on both sides, so a checkbox column sized by
+ * hand ends up with that padding plus the next cell's - about 32px between the tick and the name.
+ * This shrinks the column to its content and gives it the same small gap on each side; the name
+ * cell drops its left padding so the checkbox's own right padding is the only space between them.
+ */
 .checkboxCell {
-    width: 40px;
+    flex: 0 0 auto;
+    width: auto;
+    padding-right: var(--spacing-small);
+    padding-left: var(--spacing-small);
+}
+
+.nameCell {
+    padding-left: 0;
 }
 
 /*

@@ -52,7 +52,7 @@ export const ContentRow = ({
             <TableBodyCell className={styles.checkboxCell}>
                 <Checkbox checked={isSelected} onChange={() => onToggle(node)}/>
             </TableBodyCell>
-            <TableBodyCell>
+            <TableBodyCell className={styles.nameCell}>
                 {/*
                   * The icon is inside the indented wrapper rather than passed as iconStart, which
                   * TableBodyCell renders outside it: that left every icon in one column and shifted
