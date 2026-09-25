@@ -14,7 +14,7 @@ independent panes, each a site of its own.
 - Copy, cut and paste in either direction, with the destination named in the toolbar
 - **Paste as reference**, with the reference type chosen from what is being referenced
 - Drag rows between panes to move them
-- One level of undo: a move goes back, a copy or a reference is removed
+- One level of undo: a move goes back — under its original name — and a copy or reference is removed
 - Pasted rows tinted green briefly, so the result of an action is visible
 - References show the site they point at, with the full path as a tooltip
 - A folder that will not accept what is being dragged says so while you are still holding it
@@ -23,6 +23,7 @@ independent panes, each a site of its own.
 - Search each site by name and title
 - Full keyboard control: arrows, space, enter, Ctrl+C / X / V
 - Each pane reopens on the site it was last showing
+- Says when something was renamed on arrival, rather than leaving you to find out
 - Per-pane refresh, and a banner when a transfer is refused
 
 ## Requirements
@@ -35,6 +36,8 @@ enough** — this module consumes jContent's published API (`appShell.remotes.jc
 
 ```bash
 yarn install
+yarn test                 # 77 specs, about 3 seconds
+yarn lint
 yarn build:production     # or: mvn clean package
 ```
 
@@ -63,8 +66,11 @@ accepts none of them, and a page cannot be referenced at all.
 
 ## Known limits
 
-- **No automated tests yet.** The rules worth protecting are only observable end to end; Cypress is
-  the right fit and the reference and paste rules should be the first specs.
+- **No end-to-end tests.** 77 unit specs cover what the module *decides* — the structural refusals,
+  the reference type mapping, tree ordering, the reducer, the keyboard, rename detection and undo
+  naming — and each was mutation-checked. Nothing yet proves what it *does* to a repository: that a
+  paste lands, a reference resolves, a drag refuses, or that the permission check gates anything.
+  That needs Cypress against a live Jahia.
 - No virtualisation — 200 rows per branch.
 - The drag-time compatibility check matches on primary node type only, while a node can also
   satisfy a constraint through a supertype or a mixin. It therefore errs towards refusing, and the
