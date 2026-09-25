@@ -21,8 +21,8 @@ const INDENT_PX = 24;
  * Its own component because a row needs hooks, and hooks cannot be called from inside a map.
  */
 export const ContentRow = ({
-    node, pane, depth, hasChildren, isOpen, isSelected, isPasted, isCurrent, selection, accepts,
-    language, uilang, onToggle, onDropInto, onSetOpen, onSetCurrent
+    node, pane, depth, hasChildren, isOpen, isSelected, isPasted, isCurrent, isFocused, selection,
+    accepts, language, uilang, onToggle, onDropInto, onSetOpen, onSetCurrent
 }) => {
     const canHold = isFolder(node) || node.primaryNodeType?.name === 'jnt:virtualsite';
     // Present only on reference nodes; everything else comes back without the property
@@ -65,7 +65,8 @@ export const ContentRow = ({
                       isOver && canDrop && styles.dropInto,
                       // Refused, and said so while the reader is still holding it
                       isOver && !canDrop && styles.dropRefused,
-                      isDragging && styles.dragging
+                      isDragging && styles.dragging,
+                      isFocused && styles.focused
                   )}
                   isSelected={isCurrent}
                   isHighlighted={isSelected}
@@ -153,6 +154,7 @@ ContentRow.propTypes = {
     uilang: PropTypes.string,
     isPasted: PropTypes.bool,
     isCurrent: PropTypes.bool,
+    isFocused: PropTypes.bool,
     selection: PropTypes.array,
     onToggle: PropTypes.func.isRequired,
     onDropInto: PropTypes.func.isRequired,

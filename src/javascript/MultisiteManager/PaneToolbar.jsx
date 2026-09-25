@@ -1,13 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {useDispatch, useSelector} from 'react-redux';
+import {useDispatch} from 'react-redux';
+import {msFailure, msReload} from './MultisiteManager.redux';
+import {usePaneClipboard} from './usePaneClipboard';
 import {useTranslation} from 'react-i18next';
 import {Button, Copy, Cut, Paste, PasteAsReference, Reload, Typography} from '@jahia/moonstone';
-import {msClearClipboard, msFailure, msReload, msSetClipboard, msSetSelection} from './MultisiteManager.redux';
-import {OTHER_PANE, REDUX_KEY} from './MultisiteManager.constants';
-import {useTransfer} from './useTransfer';
 import UndoButton from './UndoButton';
-import {useTransferCheck} from './transferRules';
 import styles from './MultisiteManager.scss';
 
 /**
@@ -20,63 +18,20 @@ import styles from './MultisiteManager.scss';
 export const PaneToolbar = ({pane}) => {
     const {t} = useTranslation('multisite-manager');
     const dispatch = useDispatch();
-    const {transfer, isPasting} = useTransfer();
+    const {
+        selection, path, clipboard, hasSelection, hasClipboard, isChecking, isPasting,
+        isReadOnly, missingLanguages, canPaste, canPasteReference, copy, cut, paste, pasteAsReference
+    } = usePaneClipboard(pane);
 
-    const {selection, path, clipboard} = useSelector(state => ({
-        selection: state[REDUX_KEY][pane].selection,
-        path: state[REDUX_KEY][pane].path,
-        clipboard: state[REDUX_KEY].clipboard
-    }));
-
-    const hasSelection = selection.length > 0;
-    const hasClipboard = clipboard.nodes.length > 0;
-
-    // Asked of the repository rather than assumed: whether this folder accepts these things, and
-    // whether it accepts references to them. Both buttons were previously offered whenever there
-    // was anything on the clipboard, so a paste the destination could never accept looked available
-    // and then failed.
-    const {loading: isChecking, canPaste: typesAllowPaste, canReference, typeByPath,
-        isReadOnly, missingLanguages} = useTransferCheck(path, clipboard);
-
-    const canPaste = hasClipboard && Boolean(path) && !isPasting && !isChecking && typesAllowPaste;
-
-    // Referencing something you are in the middle of moving makes no sense, and jContent hides it
-    // for the same reason
-    const canPasteReference = hasClipboard && Boolean(path) && !isPasting && !isChecking &&
-        clipboard.type !== 'cut' && canReference;
-
-    const onCopyCut = type => {
-        dispatch(msSetClipboard(type, selection));
-        dispatch(msSetSelection(pane, []));
+    // Re-reading is also the way out of a wrong-looking pane: the automatic refresh depends on a
+    // transfer having reported what it did, and anything that goes astray there leaves the tree
+    // showing the state before it.
+    const onRefresh = () => {
+        dispatch(msFailure(pane, null));
+        dispatch(msReload(pane));
     };
 
-    const onPaste = async () => {
-        const {failures} = await transfer({
-            clipboard,
-            toPane: pane,
-            fromPane: OTHER_PANE[pane],
-            destination: path
-        });
-
-        // A cut is spent once pasted; a copy stays, so the same item can be put in several places
-        // without copying it again.
-        if (clipboard.type === 'cut' && failures.length === 0) {
-            dispatch(msClearClipboard());
-        }
-    };
-
-    const onPasteAsReference = async () => {
-        await transfer({
-            clipboard,
-            toPane: pane,
-            destination: path,
-            asReferenceTypes: typeByPath
-        });
-        // The clipboard survives on purpose: referencing the same thing from several places is the
-        // ordinary use, not the exception
-    };
-
-    // Worked out here rather than inline: the toolbar has four things it might need to say, and
+    // Worked out here rather than inline: the toolbar has several things it might need to say, and
     // choosing between them in the markup made the component hard to read
     let status = '';
     if (hasSelection) {
@@ -85,10 +40,9 @@ export const PaneToolbar = ({pane}) => {
         status = t('multisite-manager:label.chooseDestination', {count: clipboard.nodes.length});
     } else if (hasClipboard && !isChecking && isReadOnly) {
         status = t('multisite-manager:label.readOnly');
-    } else if (hasClipboard && !isChecking && !typesAllowPaste) {
+    } else if (hasClipboard && !isChecking && !canPaste && !isPasting) {
         status = t('multisite-manager:label.pasteRefused');
     } else if (hasClipboard && !isChecking && missingLanguages.length > 0) {
-        // A caution, not a refusal: the transfer is legitimate and the translation can follow
         status = t('multisite-manager:label.missingLanguages', {
             languages: missingLanguages.join(', '),
             count: missingLanguages.length
@@ -100,14 +54,6 @@ export const PaneToolbar = ({pane}) => {
         });
     }
 
-    // Re-reading is also the way out of a wrong-looking pane: the automatic refresh depends on a
-    // transfer having reported what it did, and anything that goes astray there leaves the tree
-    // showing the state before it.
-    const onRefresh = () => {
-        dispatch(msFailure(pane, null));
-        dispatch(msReload(pane));
-    };
-
     return (
         <div className={styles.paneToolbar} data-sel-role={`multisite-toolbar-${pane}`}>
             <Button size="default"
@@ -116,7 +62,7 @@ export const PaneToolbar = ({pane}) => {
                     label={t('multisite-manager:label.copy')}
                     disabled={!hasSelection}
                     data-sel-role="multisite-copy"
-                    onClick={() => onCopyCut('copy')}
+                    onClick={copy}
             />
             <Button size="default"
                     variant="ghost"
@@ -124,7 +70,7 @@ export const PaneToolbar = ({pane}) => {
                     label={t('multisite-manager:label.cut')}
                     disabled={!hasSelection}
                     data-sel-role="multisite-cut"
-                    onClick={() => onCopyCut('cut')}
+                    onClick={cut}
             />
             <Button size="default"
                     variant="ghost"
@@ -132,7 +78,7 @@ export const PaneToolbar = ({pane}) => {
                     label={t('multisite-manager:label.paste')}
                     disabled={!canPaste}
                     data-sel-role="multisite-paste"
-                    onClick={onPaste}
+                    onClick={paste}
             />
             <Button size="default"
                     variant="ghost"
@@ -141,7 +87,7 @@ export const PaneToolbar = ({pane}) => {
                     disabled={!canPasteReference}
                     title={t('multisite-manager:label.pasteReferenceHint')}
                     data-sel-role="multisite-paste-reference"
-                    onClick={onPasteAsReference}
+                    onClick={pasteAsReference}
             />
             <UndoButton pane={pane} isBusy={isPasting}/>
             <Button size="default"

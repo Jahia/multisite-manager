@@ -15,6 +15,8 @@ import {flattenTree} from './treeRows';
 import {isFolder} from './dragAndDrop';
 import {useDropCheck} from './DropCheck.context';
 import {paneSearchMode} from './paneAccordions';
+import {useKeyboard} from './useKeyboard';
+import {usePaneClipboard} from './usePaneClipboard';
 import ContentRow from './ContentRow';
 import styles from './MultisiteManager.scss';
 
@@ -44,7 +46,8 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
     const {t} = useTranslation('multisite-manager');
     const dispatch = useDispatch();
     const {language, uilang} = useSelector(state => ({language: state.language, uilang: state.uilang}));
-    const {selection, openPaths, highlighted, path, failure} = useSelector(state => state[REDUX_KEY][pane]);
+    const {selection, openPaths, highlighted, path, failure, focusIndex} = useSelector(state => state[REDUX_KEY][pane]);
+    const {copy, cut, paste} = usePaneClipboard(pane);
 
     const rootPath = `/sites/${site}`;
     const {transfer} = useTransfer();
@@ -118,14 +121,6 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
         })
     });
 
-    if (error) {
-        console.error('Could not read the contents of ' + rootPath, error);
-        return <Placeholder>{t('multisite-manager:label.error')}</Placeholder>;
-    }
-
-    // Opening a branch re-runs the whole query, and network-only means the result comes back empty
-    // before it comes back full. Rendering that would blank the tree and - worse - claim the site
-    // holds nothing. So the last rows that existed stay on screen until real ones replace them.
     // Results come back as a plain list; only the tree has a shape worth walking
     const fresh = isSearching ?
         (result?.nodes || []).map(node => ({node, depth: 0, hasChildren: false})) :
@@ -139,6 +134,17 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
     // rows are answers to a different question
     const rows = (fresh.length > 0 || isSearching) ? fresh : lastRows.current;
 
+    const onKeyDown = useKeyboard({pane, rows, focusIndex, openPaths, selection, onCopy: copy, onCut: cut, onPaste: paste});
+    const focused = Math.min(Math.max(focusIndex, 0), rows.length - 1);
+
+    if (error) {
+        console.error('Could not read the contents of ' + rootPath, error);
+        return <Placeholder>{t('multisite-manager:label.error')}</Placeholder>;
+    }
+
+    // Opening a branch re-runs the whole query, and network-only means the result comes back empty
+    // before it comes back full. Rendering that would blank the tree and - worse - claim the site
+    // holds nothing. So the last rows that existed stay on screen until real ones replace them.
     // Which folders this pane is showing, so a drag can ask about all of them at once
     register(pane, rows
         .map(row => row.node)
@@ -177,12 +183,16 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
 
     return (
         <div ref={dropOnPane}
+             // Focusable so it can receive keys, and given a role that says what it is
+             role="grid"
+             tabIndex={0}
              className={clsx(
                  styles.contentList,
                  isOverPane && canDropOnPane && styles.dropInto,
                  isOverPane && !canDropOnPane && styles.dropRefused
              )}
              data-sel-role={`multisite-content-${pane}`}
+             onKeyDown={onKeyDown}
         >
             {failure && (
                 <Banner variant="danger"
@@ -210,7 +220,7 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {rows.map(row => (
+                    {rows.map((row, index) => (
                         <ContentRow key={row.node.uuid || row.node.path}
                                     node={row.node}
                                     pane={pane}
@@ -221,6 +231,7 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
                                     isSelected={selectedPaths.has(row.node.path)}
                                     isPasted={highlightedPaths.has(row.node.path)}
                                     isCurrent={row.node.path === path}
+                                    isFocused={index === focused}
                                     accepts={accepts}
                                     language={language}
                                     uilang={uilang}

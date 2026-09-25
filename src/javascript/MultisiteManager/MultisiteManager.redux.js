@@ -18,6 +18,9 @@ const emptyPane = {
     selection: [],
     // Non-empty means this pane is showing search results rather than its tree
     searchTerms: '',
+    // Which row the keyboard is on. Separate from the selection and from the current folder:
+    // arrowing through rows must not select them.
+    focusIndex: 0,
     // Paths of rows just pasted into this pane, tinted briefly so the result of the action is
     // visible without having to hunt for it
     highlighted: [],
@@ -39,6 +42,7 @@ export const MS_HIGHLIGHT = 'MULTISITE_HIGHLIGHT';
 export const MS_FAILURE = 'MULTISITE_FAILURE';
 export const MS_UNDO = 'MULTISITE_UNDO';
 export const MS_SEARCH = 'MULTISITE_SEARCH';
+export const MS_FOCUS = 'MULTISITE_FOCUS';
 
 export const msSetSite = (pane, site) => ({type: MS_SET_SITE, pane, site});
 export const msSetPath = (pane, path) => ({type: MS_SET_PATH, pane, path});
@@ -49,6 +53,7 @@ export const msSetSelection = (pane, selection) => ({type: MS_SET_SELECTION, pan
 export const msReload = pane => ({type: MS_RELOAD, pane});
 export const msHighlight = (pane, paths) => ({type: MS_HIGHLIGHT, pane, paths});
 export const msSearch = (pane, searchTerms) => ({type: MS_SEARCH, pane, searchTerms});
+export const msFocus = (pane, focusIndex) => ({type: MS_FOCUS, pane, focusIndex});
 export const msFailure = (pane, failure) => ({type: MS_FAILURE, pane, failure});
 
 /** The type is 'copy' or 'cut'; an empty nodes list means the clipboard is empty. */
@@ -79,9 +84,11 @@ const paneReducer = (state, action) => {
             return {...state, selection: action.selection};
         case MS_RELOAD:
             return {...state, reloadCount: state.reloadCount + 1};
+        case MS_FOCUS:
+            return {...state, focusIndex: action.focusIndex};
         case MS_SEARCH:
             // Results are a different set of rows, so a selection made in the tree cannot survive
-            return {...state, searchTerms: action.searchTerms, selection: []};
+            return {...state, searchTerms: action.searchTerms, selection: [], focusIndex: 0};
         case MS_HIGHLIGHT:
             return {...state, highlighted: action.paths};
         case MS_FAILURE:
