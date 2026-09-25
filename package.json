@@ -28,6 +28,9 @@
       "jahia": "/multisite-manager/(?<rest>\\S*)"
     }
   },
+  "resolutions": {
+    "graphql": "15.10.3"
+  },
   "dependencies": {
     "@apollo/client": "^3.7.17",
     "@jahia/data-helper": "^1.1.21",
