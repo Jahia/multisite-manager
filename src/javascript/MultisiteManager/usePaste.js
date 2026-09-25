@@ -90,6 +90,10 @@ export const usePaste = () => {
                         uuid: landed.uuid,
                         path: landed.path,
                         name: node.displayName || node.name,
+                        // What it was called, and what it ended up called. The server renames on
+                        // conflict, and until these are compared nobody is told that it did.
+                        requestedName: node.name,
+                        landedName: landed.path.substring(landed.path.lastIndexOf('/') + 1),
                         // Where it was before, which is where an undo has to put it back
                         previousParent: node.path.substring(0, node.path.lastIndexOf('/'))
                     });
@@ -142,7 +146,13 @@ export const usePaste = () => {
                 const landed = data?.jcr?.pasteNode?.node;
                 if (landed?.path) {
                     paths.push(landed.path);
-                    results.push({uuid: landed.uuid, path: landed.path, name: node.displayName || node.name});
+                    results.push({
+                        uuid: landed.uuid,
+                        path: landed.path,
+                        name: node.displayName || node.name,
+                        requestedName: node.name,
+                        landedName: landed.path.substring(landed.path.lastIndexOf('/') + 1)
+                    });
                 }
 
                 pasted += 1;

@@ -27,7 +27,9 @@ const emptyPane = {
     // Bumped to make a pane re-read its folder after something has been pasted into it
     reloadCount: 0,
     // Why the last transfer into this pane failed, if it did. Shown until the next one is tried.
-    failure: null
+    failure: null,
+    // Things the server renamed on arrival because the name was taken. Silent until told.
+    renamed: []
 };
 
 export const MS_SET_SITE = 'MULTISITE_SET_SITE';
@@ -43,6 +45,7 @@ export const MS_FAILURE = 'MULTISITE_FAILURE';
 export const MS_UNDO = 'MULTISITE_UNDO';
 export const MS_SEARCH = 'MULTISITE_SEARCH';
 export const MS_FOCUS = 'MULTISITE_FOCUS';
+export const MS_RENAMED = 'MULTISITE_RENAMED';
 
 export const msSetSite = (pane, site) => ({type: MS_SET_SITE, pane, site});
 export const msSetPath = (pane, path) => ({type: MS_SET_PATH, pane, path});
@@ -55,6 +58,7 @@ export const msHighlight = (pane, paths) => ({type: MS_HIGHLIGHT, pane, paths});
 export const msSearch = (pane, searchTerms) => ({type: MS_SEARCH, pane, searchTerms});
 export const msFocus = (pane, focusIndex) => ({type: MS_FOCUS, pane, focusIndex});
 export const msFailure = (pane, failure) => ({type: MS_FAILURE, pane, failure});
+export const msRenamed = (pane, renamed) => ({type: MS_RENAMED, pane, renamed});
 
 /** The type is 'copy' or 'cut'; an empty nodes list means the clipboard is empty. */
 export const msSetClipboard = (type, nodes) => ({type: MS_CLIPBOARD, clipboard: {type, nodes}});
@@ -93,6 +97,8 @@ const paneReducer = (state, action) => {
             return {...state, highlighted: action.paths};
         case MS_FAILURE:
             return {...state, failure: action.failure};
+        case MS_RENAMED:
+            return {...state, renamed: action.renamed};
         default:
             return state;
     }

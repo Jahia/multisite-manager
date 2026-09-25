@@ -46,7 +46,8 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
     const {t} = useTranslation('multisite-manager');
     const dispatch = useDispatch();
     const {language, uilang} = useSelector(state => ({language: state.language, uilang: state.uilang}));
-    const {selection, openPaths, highlighted, path, failure, focusIndex} = useSelector(state => state[REDUX_KEY][pane]);
+    const {selection, openPaths, highlighted, path, failure, renamed, focusIndex} =
+        useSelector(state => state[REDUX_KEY][pane]);
     const {copy, cut, paste} = usePaneClipboard(pane);
 
     const rootPath = `/sites/${site}`;
@@ -201,6 +202,15 @@ const Tree = ({pane, site, mode, reloadCount, searchTerms}) => {
                         data-sel-role="multisite-failure"
                 >
                     {t('multisite-manager:label.transferFailedHint', {name: failure.name})}
+                </Banner>
+            )}
+            {renamed.length > 0 && (
+                <Banner variant="warning"
+                        className={styles.failureBanner}
+                        title={t('multisite-manager:label.renamed', {count: renamed.length})}
+                        data-sel-role="multisite-renamed"
+                >
+                    {renamed.map(r => t('multisite-manager:label.renamedOne', {from: r.from, to: r.to})).join('; ')}
                 </Banner>
             )}
             {loading && (

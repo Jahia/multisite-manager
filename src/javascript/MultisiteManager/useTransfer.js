@@ -1,6 +1,7 @@
 import {useDispatch} from 'react-redux';
-import {msFailure, msHighlight, msOpenPaths, msReload, msSetUndo} from './MultisiteManager.redux';
+import {msFailure, msHighlight, msOpenPaths, msReload, msRenamed, msSetUndo} from './MultisiteManager.redux';
 import {usePaste} from './usePaste';
+import {renamesIn} from './renames';
 
 /**
  * One way to move content, whichever gesture asked for it.
@@ -53,6 +54,10 @@ export const useTransfer = () => {
         if (paths.length > 0) {
             dispatch(msOpenPaths(toPane, [destination]));
         }
+
+        // A name that was taken is resolved by the server without a word. Comparing what was asked
+        // for against what came back is the only way anyone finds out.
+        dispatch(msRenamed(toPane, renamesIn(results)));
 
         dispatch(msReload(toPane));
 

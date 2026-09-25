@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {useDispatch} from 'react-redux';
-import {msFailure, msReload} from './MultisiteManager.redux';
+import {msFailure, msReload, msRenamed} from './MultisiteManager.redux';
 import {usePaneClipboard} from './usePaneClipboard';
 import {useTranslation} from 'react-i18next';
 import {Button, Copy, Cut, Paste, PasteAsReference, Reload, Typography} from '@jahia/moonstone';
@@ -28,6 +28,7 @@ export const PaneToolbar = ({pane}) => {
     // showing the state before it.
     const onRefresh = () => {
         dispatch(msFailure(pane, null));
+        dispatch(msRenamed(pane, []));
         dispatch(msReload(pane));
     };
 
