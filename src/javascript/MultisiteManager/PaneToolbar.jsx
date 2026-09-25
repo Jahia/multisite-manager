@@ -2,8 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {useDispatch, useSelector} from 'react-redux';
 import {useTranslation} from 'react-i18next';
-import {Button, Copy, Cut, Paste, PasteAsReference, Typography} from '@jahia/moonstone';
-import {msClearClipboard, msSetClipboard, msSetSelection} from './MultisiteManager.redux';
+import {Button, Copy, Cut, Paste, PasteAsReference, Reload, Typography} from '@jahia/moonstone';
+import {msClearClipboard, msFailure, msReload, msSetClipboard, msSetSelection} from './MultisiteManager.redux';
 import {OTHER_PANE, REDUX_KEY} from './MultisiteManager.constants';
 import {useTransfer} from './useTransfer';
 import {useTransferCheck} from './transferRules';
@@ -91,6 +91,14 @@ export const PaneToolbar = ({pane}) => {
         });
     }
 
+    // Re-reading is also the way out of a wrong-looking pane: the automatic refresh depends on a
+    // transfer having reported what it did, and anything that goes astray there leaves the tree
+    // showing the state before it.
+    const onRefresh = () => {
+        dispatch(msFailure(pane, null));
+        dispatch(msReload(pane));
+    };
+
     return (
         <div className={styles.paneToolbar} data-sel-role={`multisite-toolbar-${pane}`}>
             <Button size="default"
@@ -125,6 +133,13 @@ export const PaneToolbar = ({pane}) => {
                     title={t('multisite-manager:label.pasteReferenceHint')}
                     data-sel-role="multisite-paste-reference"
                     onClick={onPasteAsReference}
+            />
+            <Button size="default"
+                    variant="ghost"
+                    icon={<Reload/>}
+                    title={t('multisite-manager:label.refresh')}
+                    data-sel-role="multisite-refresh"
+                    onClick={onRefresh}
             />
             <div className={styles.toolbarStatus}>
                 <Typography variant="caption">{status}</Typography>

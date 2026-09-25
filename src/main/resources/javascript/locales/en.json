@@ -14,6 +14,7 @@
       "pasteReference": "Paste as reference",
       "pasteReferenceHint": "Create a link to the original rather than a copy. Not possible for pages, or into a media folder.",
       "pasteRefused": "This folder does not accept what is on the clipboard",
+      "refresh": "Refresh this panel",
       "selectSite": "Choose a site to see what it holds",
       "selected": "{{count}} selected",
       "selected_plural": "{{count}} selected",

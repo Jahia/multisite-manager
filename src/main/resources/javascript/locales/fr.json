@@ -14,6 +14,7 @@
       "pasteReference": "Coller comme référence",
       "pasteReferenceHint": "Créer un lien vers l’original plutôt qu’une copie. Impossible pour les pages, ou dans un dossier de médias.",
       "pasteRefused": "Ce dossier n’accepte pas ce qui est dans le presse-papiers",
+      "refresh": "Actualiser ce panneau",
       "selectSite": "Choisissez un site pour voir son contenu",
       "selected": "{{count}} sélectionné",
       "selected_plural": "{{count}} sélectionnés",
