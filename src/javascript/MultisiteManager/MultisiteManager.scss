@@ -33,9 +33,15 @@
     border-bottom: 1px solid var(--color-gray_light);
 }
 
+/*
+ * Bounded, and the first thing to give way. It used to take all the width left over, which pushed
+ * the site switcher down to an ellipsis - and the site a pane is showing matters more than the
+ * width of the box used to search it.
+ */
 .search {
-    flex: 1 1 auto;
+    flex: 0 1 200px;
     min-width: 0;
+    margin-left: auto;
 }
 
 .contentList {
