@@ -1,10 +1,12 @@
-import React from 'react';
+import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import {useDrag, useDrop} from 'react-dnd';
 import {Button, ChevronDown, ChevronRight, Checkbox, TableBodyCell, TableRow} from '@jahia/moonstone';
 import {NodeIcon} from '@jahia/jcontent';
 import {canDropInto, DRAG_TYPE, isFolder, toDraggable} from './dragAndDrop';
+import {isImage} from './fileUtils';
+import ThumbnailPreview from './ThumbnailPreview';
 import styles from './MultisiteManager.scss';
 
 // Each level is indented by this much, so depth reads at a glance without a guide line
@@ -20,6 +22,9 @@ export const ContentRow = ({
     node, pane, depth, hasChildren, isOpen, isSelected, isPasted, selection, onToggle, onDropInto, onSetOpen
 }) => {
     const canHold = isFolder(node) || node.primaryNodeType?.name === 'jnt:virtualsite';
+    const previewable = isImage(node);
+    // Where the pointer is, while it is over an image row; null the rest of the time
+    const [previewAt, setPreviewAt] = useState(null);
 
     const [{isDragging}, drag] = useDrag({
         type: DRAG_TYPE,
@@ -48,6 +53,8 @@ export const ContentRow = ({
                   )}
                   isHighlighted={isSelected}
                   onClick={() => onToggle(node)}
+                  onMouseMove={previewable ? (event => setPreviewAt({x: event.clientX, y: event.clientY})) : undefined}
+                  onMouseLeave={previewable ? (() => setPreviewAt(null)) : undefined}
         >
             <TableBodyCell className={styles.checkboxCell}>
                 <Checkbox checked={isSelected} onChange={() => onToggle(node)}/>
@@ -79,6 +86,7 @@ export const ContentRow = ({
                 </span>
             </TableBodyCell>
             <TableBodyCell>{node.primaryNodeType?.displayName}</TableBodyCell>
+            {previewable && <ThumbnailPreview node={node} at={previewAt}/>}
         </TableRow>
     );
 };

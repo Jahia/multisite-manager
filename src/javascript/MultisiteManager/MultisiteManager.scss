@@ -134,3 +134,25 @@
     justify-content: center;
     width: 24px;
 }
+
+/*
+ * Fixed rather than absolute: the tree scrolls, and anything positioned within it would be clipped
+ * at the edge of the panel. pointer-events are off so the preview cannot get between the pointer
+ * and the row it belongs to.
+ */
+.thumbnailPreview {
+    position: fixed;
+    z-index: 30000;
+    padding: var(--spacing-nano);
+    border: 1px solid var(--color-gray_light);
+    border-radius: 2px;
+    background-color: var(--color-light);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 25%);
+    pointer-events: none;
+
+    img {
+        display: block;
+        max-width: 180px;
+        max-height: 180px;
+    }
+}
