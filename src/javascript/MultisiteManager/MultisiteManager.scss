@@ -11,6 +11,7 @@
 .pane {
     display: flex;
     flex: 1 1 50%;
+    flex-direction: column;
     min-width: 0;
     overflow: hidden;
     background-color: var(--color-light);
@@ -91,4 +92,18 @@
 /* The row being carried, faded so the eye follows the cursor rather than the original */
 .dragging {
     opacity: 0.4;
+}
+
+.rowName {
+    display: inline-flex;
+    gap: var(--spacing-nano);
+    align-items: center;
+}
+
+/* Reserved whether or not there is a caret, so names line up within a level */
+.caret {
+    display: inline-flex;
+    flex: 0 0 24px;
+    justify-content: center;
+    width: 24px;
 }

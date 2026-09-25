@@ -2,18 +2,24 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import {useDrag, useDrop} from 'react-dnd';
-import {Checkbox, TableBodyCell, TableRow} from '@jahia/moonstone';
+import {Button, ChevronDown, ChevronRight, Checkbox, TableBodyCell, TableRow} from '@jahia/moonstone';
 import {NodeIcon} from '@jahia/jcontent';
 import {canDropInto, DRAG_TYPE, isFolder, toDraggable} from './dragAndDrop';
 import styles from './MultisiteManager.scss';
 
+// Each level is indented by this much, so depth reads at a glance without a guide line
+const INDENT_PX = 16;
+
 /**
- * One row, which is both something to pick up and - if it is a folder - somewhere to put things.
+ * One row of the tree, which is something to pick up, somewhere to put things if it can hold them,
+ * and - if it has children - something to open.
  *
  * Its own component because a row needs hooks, and hooks cannot be called from inside a map.
  */
-export const ContentRow = ({node, pane, isSelected, isPasted, selection, onToggle, onDropInto}) => {
-    const draggable = isFolder(node);
+export const ContentRow = ({
+    node, pane, depth, hasChildren, isOpen, isSelected, isPasted, selection, onToggle, onDropInto, onSetOpen
+}) => {
+    const canHold = isFolder(node) || node.primaryNodeType?.name === 'jnt:virtualsite';
 
     const [{isDragging}, drag] = useDrag({
         type: DRAG_TYPE,
@@ -28,9 +34,9 @@ export const ContentRow = ({node, pane, isSelected, isPasted, selection, onToggl
 
     const [{isOver, canDrop}, drop] = useDrop({
         accept: DRAG_TYPE,
-        canDrop: item => draggable && canDropInto(item.nodes, node.path),
+        canDrop: item => canHold && canDropInto(item.nodes, node.path),
         drop: item => onDropInto(item, node.path),
-        collect: monitor => ({isOver: monitor.isOver(), canDrop: monitor.canDrop()})
+        collect: monitor => ({isOver: monitor.isOver({shallow: true}), canDrop: monitor.canDrop()})
     });
 
     return (
@@ -47,7 +53,24 @@ export const ContentRow = ({node, pane, isSelected, isPasted, selection, onToggl
                 <Checkbox checked={isSelected} onChange={() => onToggle(node)}/>
             </TableBodyCell>
             <TableBodyCell iconStart={<NodeIcon node={node}/>}>
-                {node.displayName || node.name}
+                <span className={styles.rowName} style={{paddingLeft: depth * INDENT_PX}}>
+                    {/* The caret occupies its slot even on a leaf, so names line up within a level */}
+                    <span className={styles.caret}>
+                        {hasChildren && (
+                            <Button size="small"
+                                    variant="ghost"
+                                    icon={isOpen ? <ChevronDown/> : <ChevronRight/>}
+                                    data-sel-role="multisite-expand"
+                                    onClick={event => {
+                                        // Opening a branch is not selecting it
+                                        event.stopPropagation();
+                                        onSetOpen(node.path, !isOpen);
+                                    }}
+                            />
+                        )}
+                    </span>
+                    {node.displayName || node.name}
+                </span>
             </TableBodyCell>
             <TableBodyCell>{node.primaryNodeType?.displayName}</TableBodyCell>
         </TableRow>
@@ -57,11 +80,15 @@ export const ContentRow = ({node, pane, isSelected, isPasted, selection, onToggl
 ContentRow.propTypes = {
     node: PropTypes.object.isRequired,
     pane: PropTypes.string.isRequired,
+    depth: PropTypes.number,
+    hasChildren: PropTypes.bool,
+    isOpen: PropTypes.bool,
     isSelected: PropTypes.bool,
     isPasted: PropTypes.bool,
     selection: PropTypes.array,
     onToggle: PropTypes.func.isRequired,
-    onDropInto: PropTypes.func.isRequired
+    onDropInto: PropTypes.func.isRequired,
+    onSetOpen: PropTypes.func.isRequired
 };
 
 export default ContentRow;

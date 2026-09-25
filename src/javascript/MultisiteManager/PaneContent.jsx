@@ -2,30 +2,21 @@ import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {useDispatch, useSelector} from 'react-redux';
 import {useTranslation} from 'react-i18next';
-import clsx from 'clsx';
-import {
-    Checkbox,
-    Loader,
-    Table,
-    TableBody,
-    TableHead,
-    TableHeadCell,
-    TableRow,
-    Typography
-} from '@jahia/moonstone';
-import {useLayoutQuery} from '@jahia/jcontent';
-import {msHighlight, msSetSelection} from './MultisiteManager.redux';
-import {REDUX_KEY} from './MultisiteManager.constants';
 import {useDrop} from 'react-dnd';
-import {canDropInto, DRAG_TYPE, toDraggable} from './dragAndDrop';
-import ContentRow from './ContentRow';
+import clsx from 'clsx';
+import {Checkbox, Loader, Table, TableBody, TableHead, TableHeadCell, TableRow, Typography} from '@jahia/moonstone';
+import {useLayoutQuery} from '@jahia/jcontent';
+import {msClosePaths, msHighlight, msOpenPaths, msSetSelection} from './MultisiteManager.redux';
 import {useTransfer} from './useTransfer';
+import {REDUX_KEY} from './MultisiteManager.constants';
+import {canDropInto, DRAG_TYPE, toDraggable} from './dragAndDrop';
+import {flattenTree} from './treeRows';
+import ContentRow from './ContentRow';
 import styles from './MultisiteManager.scss';
 
-// JContent's own values, which its query handlers compare against - not exported, so repeated
-const VIEW_MODE_FLAT = 'flatList';
+// JContent's own value, which its query handlers compare against - not exported, so repeated
+const VIEW_MODE_STRUCTURED = 'structuredView';
 const VIEW_TYPE_CONTENT = 'content';
-const PAGE_SIZE = 50;
 
 // Long enough to find the row after the eye has moved back to the panel, short enough that it is
 // gone before it becomes part of how the row looks
@@ -40,84 +31,19 @@ const Placeholder = ({children}) => (
 Placeholder.propTypes = {children: PropTypes.node};
 
 /**
- * The listing itself, mounted only once the pane has a folder to show.
+ * The tree for one pane: the whole site in one list, indented.
  *
- * Kept as its own component on purpose: useLayoutQuery resolves the accordion with
- * `registry.get('accordionItem', mode)` and then reads `.tableConfig` off it without guarding, so
- * calling it with no mode - which is the state of a pane nobody has clicked in yet - throws. A hook
- * cannot be skipped, but a component can go unmounted.
+ * Structured mode means the query only descends into branches that are open, so opening a site
+ * with a great many pages costs nothing until those branches are asked for.
  */
-const ContentListing = ({pane, site, mode, path}) => {
+const Tree = ({pane, site, mode}) => {
     const {t} = useTranslation('multisite-manager');
     const dispatch = useDispatch();
     const {language, uilang} = useSelector(state => ({language: state.language, uilang: state.uilang}));
-    const selection = useSelector(state => state[REDUX_KEY][pane].selection);
-    const highlighted = useSelector(state => state[REDUX_KEY][pane].highlighted);
+    const {selection, openPaths, highlighted, path} = useSelector(state => state[REDUX_KEY][pane]);
+
+    const rootPath = `/sites/${site}`;
     const {transfer} = useTransfer();
-
-    // Dropping anywhere in the pane that is not a folder row puts things in the folder it is
-    // showing, so there is always somewhere to aim at even in a listing of leaves
-    const [{isOverPane, canDropOnPane}, dropOnPane] = useDrop({
-        accept: DRAG_TYPE,
-        canDrop: item => canDropInto(item.nodes, path),
-        drop: (item, monitor) => {
-            // A folder row under the pointer has already handled it
-            if (monitor.didDrop()) {
-                return;
-            }
-
-            onDropInto(item, path);
-        },
-        collect: monitor => ({
-            isOverPane: monitor.isOver({shallow: true}),
-            canDropOnPane: monitor.canDrop()
-        })
-    });
-
-    const {result, loading, error} = useLayoutQuery({
-        mode,
-        siteKey: site,
-        path,
-        lang: language,
-        uilang,
-        pagination: {currentPage: 0, pageSize: PAGE_SIZE},
-        sort: {orderBy: 'displayName', order: 'ASC'},
-        openPaths: [],
-        hideRoot: true,
-        tableView: {viewMode: VIEW_MODE_FLAT, viewType: VIEW_TYPE_CONTENT},
-        searchPath: '',
-        searchTerms: ''
-    });
-
-    if (loading) {
-        return <div className={styles.contentPlaceholder}><Loader size="big"/></div>;
-    }
-
-    if (error) {
-        console.error('Could not read the contents of ' + path, error);
-        return <Placeholder>{t('multisite-manager:label.error')}</Placeholder>;
-    }
-
-    const nodes = result?.nodes || [];
-
-    if (nodes.length === 0) {
-        return <Placeholder>{t('multisite-manager:label.empty')}</Placeholder>;
-    }
-
-    const selectedPaths = new Set(selection.map(node => node.path));
-    const highlightedPaths = new Set(highlighted);
-    const allSelected = nodes.length > 0 && nodes.every(node => selectedPaths.has(node.path));
-
-    const toggle = node => {
-        const next = selectedPaths.has(node.path) ?
-            selection.filter(selected => selected.path !== node.path) :
-            [...selection, toDraggable(node)];
-        dispatch(msSetSelection(pane, next));
-    };
-
-    const toggleAll = () => {
-        dispatch(msSetSelection(pane, allSelected ? [] : nodes.map(toDraggable)));
-    };
 
     // A drag is always a move: the gesture says "put it there", not "leave a copy behind"
     const onDropInto = async (item, destination) => {
@@ -131,6 +57,69 @@ const ContentListing = ({pane, site, mode, path}) => {
             fromPane: item.fromPane,
             destination
         });
+    };
+
+    const {result, loading, error} = useLayoutQuery({
+        mode,
+        siteKey: site,
+        path: rootPath,
+        lang: language,
+        uilang,
+        pagination: {currentPage: 0, pageSize: 200},
+        sort: {orderBy: 'displayName', order: 'ASC'},
+        openPaths: openPaths.length > 0 ? openPaths : [rootPath],
+        hideRoot: false,
+        tableView: {viewMode: VIEW_MODE_STRUCTURED, viewType: VIEW_TYPE_CONTENT},
+        searchPath: '',
+        searchTerms: ''
+    });
+
+    // Dropping on empty space below the tree puts things at the top of the site, so there is
+    // always a target even when every visible row is a leaf
+    const [{isOverPane, canDropOnPane}, dropOnPane] = useDrop({
+        accept: DRAG_TYPE,
+        canDrop: item => canDropInto(item.nodes, path || rootPath),
+        drop: (item, monitor) => {
+            // A row under the pointer has already handled it
+            if (!monitor.didDrop()) {
+                onDropInto(item, path || rootPath);
+            }
+        },
+        collect: monitor => ({
+            isOverPane: monitor.isOver({shallow: true}),
+            canDropOnPane: monitor.canDrop()
+        })
+    });
+
+    if (loading && !result) {
+        return <div className={styles.contentPlaceholder}><Loader size="big"/></div>;
+    }
+
+    if (error) {
+        console.error('Could not read the contents of ' + rootPath, error);
+        return <Placeholder>{t('multisite-manager:label.error')}</Placeholder>;
+    }
+
+    const rows = flattenTree(result?.nodes);
+
+    if (rows.length === 0) {
+        return <Placeholder>{t('multisite-manager:label.empty')}</Placeholder>;
+    }
+
+    const selectedPaths = new Set(selection.map(node => node.path));
+    const highlightedPaths = new Set(highlighted);
+    const openSet = new Set(openPaths);
+    const allSelected = rows.length > 0 && rows.every(row => selectedPaths.has(row.node.path));
+
+    const toggle = node => {
+        const next = selectedPaths.has(node.path) ?
+            selection.filter(selected => selected.path !== node.path) :
+            [...selection, toDraggable(node)];
+        dispatch(msSetSelection(pane, next));
+    };
+
+    const toggleAll = () => {
+        dispatch(msSetSelection(pane, allSelected ? [] : rows.map(row => toDraggable(row.node))));
     };
 
     return (
@@ -149,15 +138,21 @@ const ContentListing = ({pane, site, mode, path}) => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {nodes.map(node => (
-                        <ContentRow key={node.uuid || node.path}
-                                    node={node}
+                    {rows.map(row => (
+                        <ContentRow key={row.node.uuid || row.node.path}
+                                    node={row.node}
                                     pane={pane}
+                                    depth={row.depth}
+                                    hasChildren={row.hasChildren}
+                                    isOpen={openSet.has(row.node.path)}
                                     selection={selection}
-                                    isSelected={selectedPaths.has(node.path)}
-                                    isPasted={highlightedPaths.has(node.path)}
+                                    isSelected={selectedPaths.has(row.node.path)}
+                                    isPasted={highlightedPaths.has(row.node.path)}
                                     onToggle={toggle}
                                     onDropInto={onDropInto}
+                                    onSetOpen={(nodePath, open) => dispatch(open ?
+                                        msOpenPaths(pane, [nodePath]) :
+                                        msClosePaths(pane, [nodePath]))}
                         />
                     ))}
                 </TableBody>
@@ -166,26 +161,18 @@ const ContentListing = ({pane, site, mode, path}) => {
     );
 };
 
-ContentListing.propTypes = {
+Tree.propTypes = {
     pane: PropTypes.string.isRequired,
     site: PropTypes.string.isRequired,
-    mode: PropTypes.string.isRequired,
-    path: PropTypes.string.isRequired
+    mode: PropTypes.string.isRequired
 };
 
-/**
- * What the selected folder holds, for one pane.
- *
- * A flat list of the folder's own children rather than jContent's structured tree: the tree is
- * already on the left of this pane, and repeating it here would waste half the width that the
- * second site needs.
- */
 export const PaneContent = ({pane}) => {
     const {t} = useTranslation('multisite-manager');
     const dispatch = useDispatch();
-    const {site, mode, path, reloadCount, highlighted} = useSelector(state => state[REDUX_KEY][pane]);
+    const {site, mode, reloadCount, highlighted} = useSelector(state => state[REDUX_KEY][pane]);
 
-    // Cleared here rather than in the listing, which is remounted on every reload and would restart
+    // Cleared here rather than in the tree, which is remounted on every reload and would restart
     // its own timer. A tint that outstayed its welcome would read as a property of the row.
     const hasHighlight = highlighted.length > 0;
     useEffect(() => {
@@ -197,13 +184,13 @@ export const PaneContent = ({pane}) => {
         return () => window.clearTimeout(timer);
     }, [dispatch, pane, hasHighlight]);
 
-    if (!site || !mode || !path) {
-        return <Placeholder>{t('multisite-manager:label.selectFolder')}</Placeholder>;
+    if (!site || !mode) {
+        return <Placeholder>{t('multisite-manager:label.selectSite')}</Placeholder>;
     }
 
-    // Using reloadCount as the key remounts the listing after a paste, the simplest way to make
-    // it query again - jContent's refetch registry is not part of its exposed API.
-    return <ContentListing key={reloadCount} pane={pane} site={site} mode={mode} path={path}/>;
+    // Using reloadCount as the key remounts the tree after a transfer, the simplest way to make it
+    // query again - jContent's refetch registry is not part of its exposed API.
+    return <Tree key={reloadCount} pane={pane} site={site} mode={mode}/>;
 };
 
 PaneContent.propTypes = {

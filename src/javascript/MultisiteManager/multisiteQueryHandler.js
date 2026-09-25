@@ -1,0 +1,51 @@
+import {BaseDescendantsQuery, BaseQueryHandler, BaseTreeQueryHandler} from '@jahia/jcontent';
+
+/**
+ * One tree per site, with pages, content folders and media in it together.
+ *
+ * jContent splits these into three accordions because it is answering "where am I working today".
+ * This screen is answering "what is on this site, and what do I want to take from it", and for that
+ * the split is an obstacle: the thing you want to move and the place you want to put it are often
+ * in different halves.
+ *
+ * Built on jContent's own tree handler, so the branch-by-branch loading is the same: only opened
+ * paths are fetched, which is what makes a large site cheap to open.
+ */
+
+// Everything an editor would recognise as somewhere content lives, plus the content itself.
+// jnt:virtualsite is the site node, which is the root of the tree.
+const TYPE_FILTER = [
+    'jnt:virtualsite',
+    'jnt:page',
+    'jnt:contentFolder',
+    'jnt:folder',
+    'jnt:file',
+    'jnt:contentList',
+    'jmix:editorialContent',
+    'jmix:visibleInContentTree'
+];
+
+const SORT_BY_NAME_ASC = {fieldName: 'displayName', sortType: 'ASC'};
+
+export const MultisiteTreeQueryHandler = {
+    ...BaseQueryHandler,
+    ...BaseTreeQueryHandler,
+
+    getQuery: () => BaseDescendantsQuery,
+
+    getTreeParams: options => ({
+        ...BaseTreeQueryHandler.getTreeParams(options),
+        // Content keeps its authored order in jContent; here the tree is for finding things, and
+        // alphabetical is how you find them
+        sortBy: SORT_BY_NAME_ASC
+    }),
+
+    getQueryVariables: options => ({
+        ...BaseTreeQueryHandler.getQueryVariables(options),
+        typeFilter: TYPE_FILTER
+    }),
+
+    isStructured: () => true
+};
+
+export default MultisiteTreeQueryHandler;

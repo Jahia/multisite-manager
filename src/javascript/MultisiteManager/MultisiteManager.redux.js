@@ -50,7 +50,7 @@ const paneReducer = (state, action) => {
     switch (action.type) {
         case MS_SET_SITE:
             // A pane that changes site cannot keep its path, open branches or selection: they all
-            // belong to the site it is leaving. Mode survives, so you stay in Pages or Media.
+            // belong to the site it is leaving.
             return {...state, site: action.site, path: '', openPaths: [], selection: [], highlighted: []};
         case MS_SET_PATH:
             // Moving to another folder drops the selection with it, so a later paste cannot act on
